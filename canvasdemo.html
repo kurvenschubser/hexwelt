@@ -1,0 +1,141 @@
+<!--
+HTML Canvas element demo
+-->
+
+<head>
+<title>HTML Canvas element demo</title>
+<script src="general.js" language="javascript"></script>
+<script src="geometry.js" language="javascript"></script>
+<script src="game.js" language="javascript"></script>
+<script src="render.js" language="javascript"></script>
+<script language="javascript">
+	"use strict";
+
+	function mapBoardCoordinatesToCanvasCoordinates(board, canvas)
+	{
+		
+	}
+	var mapb2c = mapBoardCoordinatesToCanvasCoordinates;
+
+
+	function mapCanvasCoordinatesToBoardCoordinates(canvas, board)
+	{
+		
+	}
+	var mapc2b = mapCanvasCoordinatesToBoardCoordinates;
+
+
+	function run()
+	{
+		var canvas = document.getElementById("DemoCanvas");
+		canvas.height = 200;
+		canvas.onmousemove = showCursorCoordinates("Coordinates");
+		var ctx = canvas.getContext("2d");
+		// drawGrid(ctx, 10, 10, 10);
+		
+		var tiles = [
+			[
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				}),
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				}),
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				})
+			],
+			[
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				}),
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				}),
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				})
+			],
+			[
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				}),
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				}),
+				new Tile({
+					"background": "orange", 
+					"border": "blue", 
+					"highlight-background": "yellow",
+					"highlight-border": "green"
+				})
+			]
+		];
+		var board = new Board(tiles);
+		var renderer = new BoardRenderer(board, 20, 20, 100, 100, "lightskyblue");
+		renderer.render(ctx);
+	}
+
+
+	function showCursorCoordinates(targetId)
+	{
+		var target = document.getElementById(targetId)
+		return function(event)
+		{
+			var offset = getElementOffset(this);
+			var rect = new Rectangle(offset[0], offset[1], this.width, this.height);
+			var cx = event.pageX - offset[0];
+			var cy = event.pageY - offset[1];
+			var p = new Point(event.pageX, event.pageY);
+			if (rect.containsPoint(p))
+			{
+				target.innerHTML = "(" + cx + "," + cy + ")";
+			}
+		}
+	}
+
+
+	function toggleGridDirection()
+	{
+		alert("Not implemented");
+	}
+
+</script>
+
+</head>
+<body onload="run()">
+<h1 style="font: italic 2em Helvetica;">Canvas Demo</h1>
+<div>
+	<canvas id="DemoCanvas">Your browser does not support the canvas element.</canvas>
+	<div id="Coordinates">(0,0)</div>
+	<div>
+		Grid direction: <span id="LabelGridDirection">horizontal</span>
+	</div>
+	<button id="ButtonToggleGridDirection" onclick="toggleGridDirection()">Toggle grid direction</button>
+</div>
+</body>
+
