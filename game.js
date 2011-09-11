@@ -4,13 +4,54 @@ var UNITY_HEXWIDTH = Math.sqrt(0.75);
 
 function Board(tiles)
 {
-	this.tiles = tiles || [[]];
+	this.tiles = [];
+	var tmptiles = tiles || [];
+	for (var row in (tmptiles))
+	{
+		for (var col in tmptiles[row])
+		{
+			this.setTile(tmptiles[row][col], row, col);
+		}
+	}
 	this._updateDimensions();
+	this.layers = new OrderedDict([
+		["background", new Layer("background", BackgroundRenderer)],
+		["highlight", new Layer("highlight", HighlightRenderer)],
+		["grid", new Layer("grid", GridRenderer)]
+	]);
+}
+
+Board.prototype.addTilesToLayer = function(layername, tiles)
+{
+	// add tiles to layers
+	var layer = this.layers.getItem(layername);
+	for (var row in tiles)
+	{
+		for (var col in tiles[row])
+		{
+			layer.push(tiles[row][col]);
+		}
+	}
 }
 
 Board.prototype.setTile = function(tile, row, col)
 {
+	if (!(tile instanceof Tile))
+		throw new Exception("TypeError: need instance of 'Tile', got " + typeof tile);
+
+	console.log("game.js::Board.prototype.setTile 1> tile instanceof Tile = " + (tile instanceof Tile));
+	
+	if (this.tiles[row] == undefined)
+	{
+		this.tiles[row] = [];
+	}
 	this.tiles[row][col] = tile;
+
+	console.log("game.js::Board.prototype.setTile 2> tile instanceof Tile = " + (tile instanceof Tile));
+	console.log("game.js::Board.prototype.setTile> this.tiles[row][col] instanceof Tile = " + (this.tiles[row][col] instanceof Tile));
+	
+	tile.x = col;
+	tile.y = row;
 	this._updateDimensions();
 }
 
@@ -51,81 +92,23 @@ Board.prototype.fromTileDefinitions = function(tiledefs)
 Board.prototype.highlightTiles = function(coords)
 {
 	for (c in coords)
-		this.layers["highlight"].add(c);
+		this.layers.getItem("highlight").add(c);
 }
 
 
-function Layer(name)
+function Layer(name, rendererClass)
 {
+	List.prototype.constructor.call(this);
 	this.name = name;
+	this.rendererClass = rendererClass;
 }
 
-Layer.prototype = new Array;
+Layer.prototype = new List();
 
-Layer.prototype.contains = function(coord)
+Layer.prototype.getRenderer = function()
 {
-	for (var i = 0; i < this.length; i++)
-		if (this[i] == coord)
-			return true;
-	return false;
+	if (!(this._renderer))
+		this._renderer = new this.rendererClass(this);
+	return this._renderer;
 }
 
-
-function Tile(attrs)
-{
-	this._attrs = attrs;
-}
-
-Tile.prototype.getAttr = function(name)
-{
-	return this._attrs[name];
-}
-
-Tile.prototype.setAttr = function(name, value)
-{
-	this._attrs[name] = value;
-}
-
-Tile.prototype.render = function(ctx)
-{
-	// sketch out the path (unity radius dimensions).
-	ctx.moveTo(0, 0.5);
-	ctx.lineTo(UNITY_HEXWIDTH, 0);
-	ctx.lineTo(2 * UNITY_HEXWIDTH, 0.5);
-	ctx.lineTo(2 * UNITY_HEXWIDTH, 1.5);
-	ctx.lineTo(UNITY_HEXWIDTH, 2);
-	ctx.lineTo(0, 1.5);
-	ctx.closePath();
-	
-	if (this._attrs["highlighted"])
-	{
-		if (this._attrs["highlight-background"])
-			ctx.fillStyle = this._attrs["highlight-background"];
-	}
-	else	
-	{
-		if (this._attrs["background"])
-			ctx.fillStyle = this._attrs["background"];
-	}
-	ctx.fill();
-	
-	if (this._attrs["layers"] && this._attrs["layers"].length)
-	{
-		for (var layer in this._attrs["layers"])
-		{
-			ctx.drawImage(layer, 0, 0, 2 * UNITY_HEXWIDTH, 2);
-		}
-	}
-	
-	if (this._attrs["highlighted"])
-	{
-		if (this._attrs["highlight-border"])
-			ctx.strokeStyle = this._attrs["highlight-border"];
-	}
-	else	
-	{
-		if (this._attrs["border"])
-			ctx.strokeStyle = this._attrs["border"];
-	}
-	ctx.stroke()
-}

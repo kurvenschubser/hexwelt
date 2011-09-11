@@ -4,11 +4,12 @@ HTML Canvas element demo
 
 <head>
 <title>HTML Canvas element demo</title>
-<script src="general.js" language="javascript"></script>
-<script src="geometry.js" language="javascript"></script>
-<script src="game.js" language="javascript"></script>
-<script src="render.js" language="javascript"></script>
-<script language="javascript">
+<script src="general.js" type="application/javascript;version=1.8"></script>
+<script src="geometry.js" type="application/javascript;version=1.8"></script>
+<script src="datastructures.js" type="application/javascript;version=1.8"></script>
+<script src="game.js" type="application/javascript;version=1.8"></script>
+<script src="render.js" type="application/javascript;version=1.8"></script>
+<script type="application/javascript;version=1.8">
 	"use strict";
 
 	function mapBoardCoordinatesToCanvasCoordinates(board, canvas)
@@ -96,6 +97,10 @@ HTML Canvas element demo
 			]
 		];
 		var board = new Board(tiles);
+		board.addTilesToLayer("background", tiles);
+		board.addTilesToLayer("grid", tiles);
+		board.addTilesToLayer("highlight", [[tiles[1][1]]]);
+		
 		var renderer = new BoardRenderer(board, 20, 20, 100, 100, "lightskyblue");
 		renderer.render(ctx);
 	}
@@ -128,7 +133,7 @@ HTML Canvas element demo
 
 </head>
 <body onload="run()">
-<h1 style="font: italic 2em Helvetica;">Canvas Demo</h1>
+<h1 style="font: italic 2em Helvetica;">Canvas Demo (built for Gecko >= 3)</h1>
 <div>
 	<canvas id="DemoCanvas">Your browser does not support the canvas element.</canvas>
 	<div id="Coordinates">(0,0)</div>
