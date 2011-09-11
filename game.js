@@ -38,18 +38,11 @@ Board.prototype.setTile = function(tile, row, col)
 {
 	if (!(tile instanceof Tile))
 		throw new Exception("TypeError: need instance of 'Tile', got " + typeof tile);
-
-	console.log("game.js::Board.prototype.setTile 1> tile instanceof Tile = " + (tile instanceof Tile));
-	
 	if (this.tiles[row] == undefined)
 	{
 		this.tiles[row] = [];
 	}
-	this.tiles[row][col] = tile;
-
-	console.log("game.js::Board.prototype.setTile 2> tile instanceof Tile = " + (tile instanceof Tile));
-	console.log("game.js::Board.prototype.setTile> this.tiles[row][col] instanceof Tile = " + (this.tiles[row][col] instanceof Tile));
-	
+	this.tiles[row][col] = tile;	
 	tile.x = col;
 	tile.y = row;
 	this._updateDimensions();

@@ -10,11 +10,6 @@ function List(enumerable)
 		this.arr = [];
 }
 
-List.prototype.__iterator__ = function()
-{	
-	return ListIterator(this);
-}
-
 List.prototype.concat = function(enumerable)
 {
 	return this.arr.concat(enumerable);
