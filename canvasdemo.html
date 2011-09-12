@@ -9,8 +9,32 @@ HTML Canvas element demo
 <script src="datastructures.js" type="application/javascript;version=1.8"></script>
 <script src="game.js" type="application/javascript;version=1.8"></script>
 <script src="render.js" type="application/javascript;version=1.8"></script>
+<script src="events.js" type="application/javascript;version=1.8"></script>
 <script type="application/javascript;version=1.8">
 	"use strict";
+
+
+	// Wrapper to construct callback for event 'onmouseover'
+	//
+	function highlightBoardCursor(board)
+	{
+		
+		
+		var board = board;
+		return function(event, info)
+		{
+			var p = info["coords"]
+			if (p)
+			{
+				//var x = p.x - board.x;
+				//var y = p.y - board.y;
+				//if (x > -1 && y > -1)
+				//{
+					//alert("uga");
+				//}
+			}
+		}
+	}
 
 	function mapBoardCoordinatesToCanvasCoordinates(board, canvas)
 	{
@@ -28,12 +52,6 @@ HTML Canvas element demo
 
 	function run()
 	{
-		var canvas = document.getElementById("DemoCanvas");
-		canvas.height = 200;
-		canvas.onmousemove = showCursorCoordinates("Coordinates");
-		var ctx = canvas.getContext("2d");
-		// drawGrid(ctx, 10, 10, 10);
-		
 		var tiles = [
 			[
 				new Tile({
@@ -101,24 +119,50 @@ HTML Canvas element demo
 		board.addTilesToLayer("grid", tiles);
 		board.addTilesToLayer("highlight", [[tiles[1][1]]]);
 		
+		var canvas = document.getElementById("DemoCanvas");
+		canvas.height = 200;
+
+		var onMouseMoveEvent = new Event(
+			"onmousemove", 
+			[showCursorCoordinates("Coordinates"), highlightBoardCursor(board)],
+//			[function(event, info){ alert("dummy"); }],
+			function(event, info)
+			{
+				var offset = getElementOffset(info["caller"]);
+				var rect = new Rectangle(offset[0], offset[1], info["caller"].width, info["caller"].height);
+				var p = new Point(event.pageX, event.pageY);
+				if (rect.containsPoint(p))
+				{
+					p.x -= offset[0];
+					p.y -= offset[1];
+					info["coords"] = p;
+				}
+			}
+		)
+		canvas.onmousemove = onMouseMoveEvent.getCallable();
+
+		var ctx = canvas.getContext("2d");
+		// drawGrid(ctx, 10, 10, 10);
+		
 		var renderer = new BoardRenderer(board, 20, 20, 100, 100, "lightskyblue");
 		renderer.render(ctx);
+
+//		var boardWindow = new Window(20, 20, 100, 100, "lightskyblue");
+//		var renderer = new BoardRenderer(board);
+//		boardWindow.setChild(renderer);
+//		boardWindow.render(ctx);
 	}
 
 
 	function showCursorCoordinates(targetId)
 	{
 		var target = document.getElementById(targetId)
-		return function(event)
+		return function(event, info)
 		{
-			var offset = getElementOffset(this);
-			var rect = new Rectangle(offset[0], offset[1], this.width, this.height);
-			var cx = event.pageX - offset[0];
-			var cy = event.pageY - offset[1];
-			var p = new Point(event.pageX, event.pageY);
-			if (rect.containsPoint(p))
+			var p = info["coords"];
+			if (p)
 			{
-				target.innerHTML = "(" + cx + "," + cy + ")";
+				target.innerHTML = "(" + p.x + "," + p.y + ")";
 			}
 		}
 	}
@@ -135,7 +179,7 @@ HTML Canvas element demo
 <body onload="run()">
 <h1 style="font: italic 2em Helvetica;">Canvas Demo (built for Gecko >= 3)</h1>
 <div>
-	<canvas id="DemoCanvas">Your browser does not support the canvas element.</canvas>
+	<canvas id="DemoCanvas" style="border: 1px solid black;">Your browser does not support the canvas element.</canvas>
 	<div id="Coordinates">(0,0)</div>
 	<div>
 		Grid direction: <span id="LabelGridDirection">horizontal</span>

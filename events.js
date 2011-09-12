@@ -1,23 +1,44 @@
 // Event system javascript
 
 
-function Event(callbacks)
+function Event(name, callbacks, prepFunc, exitFunc)
 {
-	return function(event)
-	{
-		
-	}
+	this.name = name;
+	this.callbacks = callbacks;
+	this.prepFunc = prepFunc;
+	this.exitFunc = exitFunc;
 }
 
-Event.prototype.connect()
+Event.prototype.getCallable = function()
 {
-
+	if (!(this.callable))
+	{
+		var eventSystem = this;
+		this.callable = function(event)
+		{
+			eventSystem.fire(event)
+		}
+	}
+	return this.callable;
 }
 
-Event.prototype.fire(name)
+Event.prototype.connect = function(callback)
 {
-	for (var cb in this.events[name])
+	this.callbacks.push(callback);
+}
+
+Event.prototype.fire = function(event)
+{
+	var info = {"caller": (event.target || event.srcElement)};
+	if (this.prepFunc)
+		this.prepFunc(event, info);
+	for (var i in this.callbacks)
 	{
-		
+		// keep going until a callback returns true 
+		// (meaning no further event handling is needed)
+		if (this.callbacks[i](event, info))
+			break;
 	}
+	if (this.exitFunc)
+		this.exitFunc(event, info);
 }

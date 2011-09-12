@@ -15,6 +15,11 @@ List.prototype.concat = function(enumerable)
 	return this.arr.concat(enumerable);
 }
 
+List.prototype.clear = function()
+{
+	return this.arr.clear();
+}
+
 List.prototype.contains = function(obj)
 {
 	for (var i = 0; i < this.arr.length; i++)
