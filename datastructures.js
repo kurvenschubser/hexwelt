@@ -17,7 +17,8 @@ List.prototype.concat = function(enumerable)
 
 List.prototype.clear = function()
 {
-	return this.arr.clear();
+	for (var i = 0; i < this.arr.length; i++)
+		this.arr.pop()
 }
 
 List.prototype.contains = function(obj)

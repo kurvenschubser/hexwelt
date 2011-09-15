@@ -1,14 +1,9 @@
 "use strict";
 
-function BoardRenderer(board, x, y, maxWidth, maxHeight, background)
+function BoardRenderer(board)
 {
 	this.board = board;
-	this.x = x;
-	this.y = y;
-	this.maxWidth = maxWidth;
-	this.maxHeight = maxHeight;
-	this.background = background || "lightpink";
-
+	this.background = "rgba(0, 0, 0, 0.6)";
 	this.update();
 }
 
@@ -19,12 +14,14 @@ BoardRenderer.prototype.render = function(ctx)
 
 	ctx.save();
 	
+	var b = this.parent.getBoundingBox();
+
 	// DEBUG
 	ctx.strokeStyle = "red";
-	ctx.strokeRect(this.x, this.y, this.maxWidth, this.maxHeight);
+	ctx.strokeRect(b.x, b.y, b.width, b.height);
 
 	ctx.fillStyle = this.background;
-	ctx.translate(this.x + boardArea.x, this.y + boardArea.y);
+	ctx.translate(b.x + boardArea.x, b.y + boardArea.y);
 	ctx.fillRect(0, 0, boardArea.width, boardArea.height);
 	ctx.scale(scales[0], scales[1]);
 	ctx.lineWidth = 0.05;
@@ -38,20 +35,20 @@ BoardRenderer.prototype.render = function(ctx)
 
 BoardRenderer.prototype.getBoardArea = function()
 {
+	var b = this.parent.getBoundingBox();
 	var dims = resizeThumbnail(
 		this.unityWidth, 
 		this.unityHeight, 
-		this.maxWidth, 
-		this.maxHeight
+		b.width, 
+		b.height
 	);
 	return new Rectangle(
-		(this.maxWidth - dims[0]) / 2, 
-		(this.maxHeight - dims[1]) / 2,
+		(b.width - dims[0]) / 2, 
+		(b.height - dims[1]) / 2,
 		dims[0],
 		dims[1]
 	);
 }
-
 
 BoardRenderer.prototype.getScales = function()
 {

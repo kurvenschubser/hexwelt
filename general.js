@@ -10,3 +10,9 @@ function getElementOffset(node)
 	}
 	return [x, y];
 }
+
+
+function trueDiv(dividend, divisor)
+{
+	return Math.floor((dividend - dividend % divisor) / divisor);
+}

@@ -82,10 +82,9 @@ Board.prototype.fromTileDefinitions = function(tiledefs)
 	this._updateDimensions();
 }
 
-Board.prototype.highlightTiles = function(coords)
+Board.prototype.highlightTiles = function(tiles)
 {
-	for (c in coords)
-		this.layers.getItem("highlight").add(c);
+	this.addTilesToLayer("highlight", tiles);
 }
 
 

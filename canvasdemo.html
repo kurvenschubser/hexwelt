@@ -9,29 +9,46 @@ HTML Canvas element demo
 <script src="datastructures.js" type="application/javascript;version=1.8"></script>
 <script src="game.js" type="application/javascript;version=1.8"></script>
 <script src="render.js" type="application/javascript;version=1.8"></script>
+<script src="windows.js" type="application/javascript;version=1.8"></script>
 <script src="events.js" type="application/javascript;version=1.8"></script>
 <script type="application/javascript;version=1.8">
 	"use strict";
 
 
 	// Wrapper to construct callback for event 'onmouseover'
-	//
-	function highlightBoardCursor(board)
+	function highlightBoardCursor(renderer)
 	{
-		
-		
-		var board = board;
+		var board = renderer.board;
+		var window = renderer.parent;
 		return function(event, info)
 		{
 			var p = info["coords"]
 			if (p)
 			{
-				//var x = p.x - board.x;
-				//var y = p.y - board.y;
-				//if (x > -1 && y > -1)
-				//{
-					//alert("uga");
-				//}
+				var boundingBox = renderer.parent.getBoundingBox()
+				var boardArea = renderer.getBoardArea();
+				var pp = new Point(p.x - boundingBox.x, p.y - boundingBox.y);	
+				if (boardArea.containsPoint(pp))
+				{
+					pp.x -= boardArea.x;
+					pp.y -= boardArea.y;
+					var boardCoords = mapd2b(renderer, pp.x, pp.y);
+					var highlightLayer = board.layers.getItem("highlight");
+					highlightLayer.clear();
+					if (boardCoords)
+					{
+						console.log("canvasdemo.js::highlightBoardCursor> boardCoords = " + boardCoords);
+						var tile = board.tiles[boardCoords[1]][boardCoords[0]];
+						
+						console.log("canvasdemo.js::highlightBoardCursor> tile = " + tile.x + ", " + tile.y);
+
+						highlightLayer.push(tile);
+						
+						console.log("canvasdemo.js::highlightBoardCursor> layers['highlight'] = " + board.layers.getItem("highlight").get(0).x + ", " + board.layers.getItem("highlight").get(0).y);
+						
+					}
+					board.updateEvent.fire({"target": board});
+				}
 			}
 		}
 	}
@@ -43,11 +60,143 @@ HTML Canvas element demo
 	var mapb2c = mapBoardCoordinatesToCanvasCoordinates;
 
 
-	function mapCanvasCoordinatesToBoardCoordinates(canvas, board)
+	function mapDisplayCoordinatesToBoardCoordinates(renderer, cx, cy)
 	{
+		var board = renderer.board;
+		var scales = renderer.getScales();
+		var row = trueDiv(cy, scales[1] * 1.5);
 		
+		var col = trueDiv(cx - (row % 2) * scales[0] * UNITY_HEXWIDTH, scales[0] * UNITY_HEXWIDTH * 2);
+		var hex = new Hexagon((col + (row % 2) * 0.5) * scales[0] * UNITY_HEXWIDTH * 2, row * scales[1] * 1.5, scales[1]);
+
+		console.log("canvasdemo.js::mapd2b> hex = " + hex);
+
+		var hexWidth = hex.getWidth();
+
+		// inner square of Rectangle
+		var innerBox = new Rectangle(hex.x, hex.y + hex.r * 0.5, hexWidth * 2, hex.r);
+
+		if (innerBox.containsPoint(new Point(cx, cy)))
+		{
+			if (col == board.cols || row == board.rows)
+				return;
+			return [col, row];
+		}
+		var center = hex.getCenter();
+		
+		console.log("canvasdemo.js::mapd2b> center = " + center);
+		
+		if (cy < center.y)
+		{
+			if (cx < center.x)
+			{
+				// Sector 0, 0
+				console.log("canvasdemo.js::mapd2b> sector = (0, 0)");
+				
+				var borderY = (cx - hex.x) * ((hex.r * 0.5) / hexWidth);
+				if (cy > innerBox.y - borderY)
+					return [col, row];
+				if (row % 2)
+				{
+					return [col, row - 1];
+				}
+				else
+				{
+					if (!(col) || !(row))
+						return;
+					else
+						return [col - 1, row - 1];
+				}
+			}
+			else
+			{
+				// Sector 1, 0
+				console.log("canvasdemo.js::mapd2b> sector = (1, 0)");
+				
+				var borderY = (hex.x + hexWidth * 2 - cx) * ((hex.r * 0.5) / hexWidth);
+				if (cy > innerBox.y - borderY)
+					return [col, row];
+				if (row % 2)
+				{
+					// outside the board
+					if (col == board.cols - 1)
+						return;
+					else
+						return [col + 1, row - 1];
+				}
+				else
+				{
+					// outside the board
+					if (!(row))
+						return;
+					else
+						return [col, row - 1];
+				}
+				return;
+			}
+		}
+		else
+		{
+			alert("canvasdemo.html::mapd2b> innerBox = " + innerBox);
+			
+
+			if (cx < center.x)
+			{
+				// Sector 0, 1
+				console.log("canvasdemo.js::mapd2b> sector = (0, 1)");
+			
+				var borderY = (cx - hex.x) * ((hex.r * 0.5) / hexWidth);
+				if (cy < innerBox.y + innerBox.height + borderY)
+					return [col, row];
+				
+				alert("helo");
+				
+				if (row % 2)
+				{
+					// outside the board
+					if (row == board.rows - 1)
+						return;
+					else
+						return [col, row + 1];
+				}
+				else
+				{
+					// outside the board
+					if (row == board.rows -1 || !col)
+						return;
+					else
+						return [col - 1, row + 1];
+				}
+				return;
+			}
+			else
+			{
+				// Sector 1, 1
+				console.log("canvasdemo.js::mapd2b> sector = (1, 1)");
+				
+				var borderY = (hex.x + hexWidth * 2 - cx) * ((hex.r * 0.5) / hexWidth);
+				if (cy < innerBox.y + innerBox.height + borderY)
+					return [col, row];
+				if (row % 2)
+				{
+					// outside the board
+					if (row == board.rows - 1 || col == board.cols - 1)
+						return;
+					else
+						return [col + 1, row + 1];
+				}
+				else
+				{
+					// outside the board
+					if (row == board.rows - 1)
+						return;
+					else
+						return [col, row + 1];
+				}
+			}
+		}
 	}
-	var mapc2b = mapCanvasCoordinatesToBoardCoordinates;
+	var mapd2b = mapDisplayCoordinatesToBoardCoordinates;
 
 
 	function run()
@@ -118,14 +267,19 @@ HTML Canvas element demo
 		board.addTilesToLayer("background", tiles);
 		board.addTilesToLayer("grid", tiles);
 		board.addTilesToLayer("highlight", [[tiles[1][1]]]);
-		
+
+		var renderer = new BoardRenderer(board);
+		var window = new Window(renderer);
+		window.setBoundingBox(20, 20, 100, 100);
+		window.background = "lightpink";
 		var canvas = document.getElementById("DemoCanvas");
 		canvas.height = 200;
+		var ctx = canvas.getContext("2d");
 
+		// begin of events
 		var onMouseMoveEvent = new Event(
 			"onmousemove", 
-			[showCursorCoordinates("Coordinates"), highlightBoardCursor(board)],
-//			[function(event, info){ alert("dummy"); }],
+			[showCursorCoordinates("Coordinates"), highlightBoardCursor(renderer)],
 			function(event, info)
 			{
 				var offset = getElementOffset(info["caller"]);
@@ -137,20 +291,20 @@ HTML Canvas element demo
 					p.y -= offset[1];
 					info["coords"] = p;
 				}
+			},
+			function(event, info)
+			{
+				window.render(ctx);
 			}
 		)
 		canvas.onmousemove = onMouseMoveEvent.getCallable();
 
-		var ctx = canvas.getContext("2d");
-		// drawGrid(ctx, 10, 10, 10);
-		
-		var renderer = new BoardRenderer(board, 20, 20, 100, 100, "lightskyblue");
-		renderer.render(ctx);
+		board.updateEvent = new Event(
+			"updateEvent",
+			[function(event, info){ window.render(ctx) }]
+		);
 
-//		var boardWindow = new Window(20, 20, 100, 100, "lightskyblue");
-//		var renderer = new BoardRenderer(board);
-//		boardWindow.setChild(renderer);
-//		boardWindow.render(ctx);
+		window.render(ctx);
 	}
 
 
@@ -179,7 +333,7 @@ HTML Canvas element demo
 <body onload="run()">
 <h1 style="font: italic 2em Helvetica;">Canvas Demo (built for Gecko >= 3)</h1>
 <div>
-	<canvas id="DemoCanvas" style="border: 1px solid black;">Your browser does not support the canvas element.</canvas>
+	<canvas id="DemoCanvas" style="border: 0px solid black;">Your browser does not support the canvas element.</canvas>
 	<div id="Coordinates">(0,0)</div>
 	<div>
 		Grid direction: <span id="LabelGridDirection">horizontal</span>
