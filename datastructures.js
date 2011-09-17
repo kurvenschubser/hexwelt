@@ -31,7 +31,7 @@ List.prototype.contains = function(obj)
 	return false;
 }
 
-List.prototype.get = function(index)
+List.prototype.getItem = function(index)
 {
 	return this.arr[index];
 }

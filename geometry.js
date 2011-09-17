@@ -10,9 +10,20 @@ function Hexagon(x, y, radius)
 
 Hexagon.prototype.containsPoint = function(point)
 {
-	return 
-		this.x + 0.5 * this.r <= point.x && point.x <= this.x + 1.5 * r &&
-		this.y <= point.y && point.y <= this.y + 2 * this.r
+	var width = this.getWidth();
+	if (!(this.getBoundingBox().containsPoint(point)))
+		return false;
+	if ((new Rectangle(this.x, this.y + this.r / 2, width * 2, this.r)).containsPoint(point))
+	{
+		return true;
+	}
+	var center = this.getCenter();
+	var xdistance = Math.abs((this.x + (point.x > center.x) * width * 2) - point.x);
+	var gradient = (this.r / 2) / width;
+	var ydistance = Math.abs((this.y + (point.y > center.y) * this.r * 2) - point.y);
+	if (ydistance > (this.r / 2) - gradient * xdistance)
+		return true;
+	return false;
 }
 
 Hexagon.prototype.getBoundingBox = function()
@@ -22,8 +33,7 @@ Hexagon.prototype.getBoundingBox = function()
 
 Hexagon.prototype.getCenter = function()
 {
-	var b = this.getBoundingBox();
-	return new Point(b.x + b.w / 2, b.y + b.h / 2);
+	return new Point(this.x + this.getWidth(), this.y + this.r);
 }
 
 Hexagon.prototype.getWidth = function()

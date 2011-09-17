@@ -1,28 +1,36 @@
 "use strict";
 
-function BoardRenderer(board)
+function BoardRenderer(board, backgroundImage)
 {
 	this.board = board;
-	this.background = "rgba(0, 0, 0, 0.6)";
+	this.backgroundImage = backgroundImage;
 	this.update();
 }
 
-BoardRenderer.prototype.render = function(ctx)
+BoardRenderer.prototype.drawBackground = function(ctx)
 {
-	var scales = this.getScales();
-	var boardArea = this.getBoardArea();
-
-	ctx.save();
-	
 	var b = this.parent.getBoundingBox();
+	var boardArea = this.getBoardArea();
 
 	// DEBUG
 	ctx.strokeStyle = "red";
 	ctx.strokeRect(b.x, b.y, b.width, b.height);
 
-	ctx.fillStyle = this.background;
 	ctx.translate(b.x + boardArea.x, b.y + boardArea.y);
-	ctx.fillRect(0, 0, boardArea.width, boardArea.height);
+	ctx.drawImage(this.backgroundImage, 0, 0, boardArea.width, boardArea.height);
+	
+	// ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+	// ctx.fillRect(0, 0, boardArea.width, boardArea.height);
+}
+
+BoardRenderer.prototype.render = function(ctx)
+{
+	var scales = this.getScales();
+
+	ctx.save();
+	
+	this.drawBackground(ctx);
+	
 	ctx.scale(scales[0], scales[1]);
 	ctx.lineWidth = 0.05;
 	for (var i in this.board.layers.values)
@@ -92,7 +100,7 @@ LayerRenderer.prototype.render = function(ctx)
 {	
 	for (var i = 0; i < this.layer.length; i++)
 	{
-		var tile = this.layer.get(i);	
+		var tile = this.layer.getItem(i);	
 		ctx.save();
 		ctx.translate((tile.x * 2 + (tile.y % 2)) * UNITY_HEXWIDTH, tile.y * 1.5);
 		this.drawLayer(ctx, tile);
@@ -108,7 +116,7 @@ function BackgroundRenderer(layer)
 
 BackgroundRenderer.prototype = new LayerRenderer;
 
-BackgroundRenderer.prototype.drawLayer = function(ctx)
+BackgroundRenderer.prototype.drawLayer = function(ctx, tile)
 {
 	this.makeHexPath(ctx);
 	ctx.fillStyle = "orange";
@@ -123,7 +131,7 @@ function GridRenderer(layer)
 
 GridRenderer.prototype = new LayerRenderer;
 
-GridRenderer.prototype.drawLayer = function(ctx)
+GridRenderer.prototype.drawLayer = function(ctx, tile)
 {
 	this.makeHexPath(ctx);
 	ctx.strokeStyle = "black";
@@ -145,20 +153,3 @@ HighlightRenderer.prototype.drawLayer = function(ctx, tile)
 	ctx.fill();
 }
 
-
-function Tile(coord, attrs)
-{
-	this._attrs = attrs;
-	this.x = null;		// Internal: never set this in user code.
-	this.y = null;		// Internal: never set this in user code.
-}
-
-Tile.prototype.getAttr = function(name)
-{
-	return this._attrs[name];
-}
-
-Tile.prototype.setAttr = function(name, value)
-{
-	this._attrs[name] = value;
-}

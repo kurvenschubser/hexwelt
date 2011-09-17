@@ -14,5 +14,11 @@ function getElementOffset(node)
 
 function trueDiv(dividend, divisor)
 {
-	return Math.floor((dividend - dividend % divisor) / divisor);
+	return Math.round((dividend - dividend % divisor) / divisor);
+}
+
+
+String.prototype.rsplit = function(sep, maxsplit) {
+    var split = this.split(sep);
+    return maxsplit ? [ split.slice(0, -maxsplit).join(sep) ].concat(split.slice(-maxsplit)) : split;
 }

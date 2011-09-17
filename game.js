@@ -104,3 +104,20 @@ Layer.prototype.getRenderer = function()
 	return this._renderer;
 }
 
+
+function Tile(coord, attrs)
+{
+	this._attrs = attrs;
+	this.x = null;		// Internal: never set this in user code.
+	this.y = null;		// Internal: never set this in user code.
+}
+
+Tile.prototype.getAttr = function(name)
+{
+	return this._attrs[name];
+}
+
+Tile.prototype.setAttr = function(name, value)
+{
+	this._attrs[name] = value;
+}
