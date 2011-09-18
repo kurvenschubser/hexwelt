@@ -1,7 +1,5 @@
 "use strict";
 
-var UNITY_HEXWIDTH = Math.sqrt(0.75);
-
 function Board(tiles)
 {
 	this.tiles = [];
@@ -21,23 +19,16 @@ function Board(tiles)
 	]);
 }
 
-Board.prototype.addTilesToLayer = function(layername, tiles)
+Board.prototype.setGroupOnLayer = function(layername, group)
 {
-	// add tiles to layers
-	var layer = this.layers.getItem(layername);
-	for (var row in tiles)
-	{
-		for (var col in tiles[row])
-		{
-			layer.push(tiles[row][col]);
-		}
-	}
+	// add groups of whatever on a layer
+	this.layers.getItem(layername).setGroup(group);
 }
 
 Board.prototype.setTile = function(tile, row, col)
 {
 	if (!(tile instanceof Tile))
-		throw new Exception("TypeError: need instance of 'Tile', got " + typeof tile);
+		throw new Error("TypeError: need instance of 'Tile', got " + typeof tile);
 	if (this.tiles[row] == undefined)
 	{
 		this.tiles[row] = [];
@@ -84,13 +75,13 @@ Board.prototype.fromTileDefinitions = function(tiledefs)
 
 Board.prototype.highlightTiles = function(tiles)
 {
-	this.addTilesToLayer("highlight", tiles);
+	this.setGroupOnLayer("highlight", tiles);
 }
 
 
 function Layer(name, rendererClass)
 {
-	List.prototype.constructor.call(this);
+	Layer.prototype.constructor.call(this);
 	this.name = name;
 	this.rendererClass = rendererClass;
 }
@@ -102,6 +93,35 @@ Layer.prototype.getRenderer = function()
 	if (!(this._renderer))
 		this._renderer = new this.rendererClass(this);
 	return this._renderer;
+}
+
+Layer.prototype.setGroup = function(group)
+{
+	this.clear();
+	for (var i in group)
+	{
+		this.push(group[i]);
+	}
+}
+
+
+function Movable(name)
+{
+	this.name = name;
+}
+
+Movable.prototype.setTile = function(tile)
+{
+	if (!(tile instanceof Tile))
+		throw new Error("TypeError: need instance of 'Tile', got '" + (typeof tile) + "'.");
+	this.tile = tile;
+}
+
+Movable.prototype.getTile = function()
+{
+	if (!(this.tile))
+		throw new Error("AttributeError: tile.");
+	return this.tile;
 }
 
 
@@ -120,4 +140,9 @@ Tile.prototype.getAttr = function(name)
 Tile.prototype.setAttr = function(name, value)
 {
 	this._attrs[name] = value;
+}
+
+Tile.prototype.toString = function()
+{
+	return "<Tile(" + this.x + ", " + this.y + ")>";
 }

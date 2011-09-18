@@ -12,50 +12,32 @@ HTML Canvas element demo
 <script src="windows.js" type="application/javascript;version=1.8"></script>
 <script src="events.js" type="application/javascript;version=1.8"></script>
 <script src="resources.js" type="application/javascript;version=1.8"></script>
+<script src="tbsg.js" type="application/javascript;version=1.8"></script>
 
 <script type="application/javascript;version=1.8">
 	"use strict";
 
 
 	// Wrapper to construct callback for event 'onmouseover'
-	function highlightBoardCursor(renderer)
+	function highlightBoardCursor(board)
 	{
-		var board = renderer.board;
-		var window = renderer.parent;
 		return function(event, info)
 		{
-			var p = info["coords"];
-			if (p)
-			{
-				var boundingBox = renderer.parent.getBoundingBox()
-				var boardArea = renderer.getBoardArea();
-				var pp = new Point(p.x - boundingBox.x, p.y - boundingBox.y);	
-				if (boardArea.containsPoint(pp))
-				{
-					pp.x -= boardArea.x;
-					pp.y -= boardArea.y;
-					var boardCoords = mapd2b(renderer, pp.x, pp.y);
-					var highlightLayer = board.layers.getItem("highlight");
-					highlightLayer.clear();
-					if (boardCoords)
-					{
-						var tile = board.tiles[boardCoords[1]][boardCoords[0]];
-						if (tile)
-							highlightLayer.push(tile);	
-					}
-					board.updateEvent.fire({"target": board});
-				}
-			}
+			var highlightLayer = board.layers.getItem("highlight");
+			highlightLayer.clear();
+			if (info["currentTile"])
+				highlightLayer.push(info.currentTile);
 		}
 	}
 
-	function mapBoardCoordinatesToCanvasCoordinates(board, canvas)
+	function mapBoardCoordinatesToDisplayCoordinates(renderer, bx, by)
 	{
 		
 	}
-	var mapb2c = mapBoardCoordinatesToCanvasCoordinates;
+	var mapb2d = mapBoardCoordinatesToDisplayCoordinates;
 
 
+	// XXX Move to render.js::BoardRenderer
 	function mapDisplayCoordinatesToBoardCoordinates(renderer, cx, cy)
 	{
 		var board = renderer.board;
@@ -106,7 +88,7 @@ HTML Canvas element demo
 
 	function run()
 	{
-		var images = new ImagePreFetcher(["eagle.jpg", "dragon.png"]).fetch();
+		IMAGES = new ImagePreFetcher(["eagle.jpg", "dragon.png"]).fetch();
 		var tiles = [
 			[
 				new Tile(),
@@ -252,43 +234,55 @@ HTML Canvas element demo
 				new Tile()
 			]
 		];
+	
 		var board = new Board(tiles);
-		board.addTilesToLayer("background", tiles);
-		board.addTilesToLayer("grid", tiles);
-		board.addTilesToLayer("highlight", [[tiles[1][1]]]);
+		
+		// static fields
+		board.setGroupOnLayer("background", flattenArray(tiles));
+		board.setGroupOnLayer("grid", flattenArray(tiles));
+		board.setGroupOnLayer("highlight", [tiles[1][1]]);
+		
+		board.layers.setItem("dragon", (new Layer("dragon", DragonRenderer)));
+		
+		var poldi = new Dragon("Poldi");
+		poldi.setTile(tiles[9][2]);
+		
+		board.setGroupOnLayer("dragon", [poldi]);
 
-		var renderer = new BoardRenderer(board, images["eagle.jpg"]);
+		var renderer = new BoardRenderer(board, IMAGES["eagle.jpg"]);
 		var window = new Window(renderer);
-		window.setBoundingBox(20, 20, 300, 300);
+		window.setBoundingBox(20, 20, 728, 492);
 		window.background = "lightpink";
 		var canvas = document.getElementById("DemoCanvas");
-		canvas.width = 600;
-		canvas.height = 400;
-		var CANVAS_OFFSET = getElementOffset(canvas);
+		
+		CANVAS_OFFSET = getElementOffset(canvas);
+		
+		canvas.width = 768;
+		canvas.height = 512;
 		var ctx = canvas.getContext("2d");
 
 		// begin of events
 		var onMouseMoveEvent = new Event(
 			"onmousemove", 
-			[showCursorCoordinates("Coordinates"), highlightBoardCursor(renderer)],
+			[	
+				getTileFromDisplayCoordinates(renderer), 
+				showCursorCoordinates("Coordinates"), 
+				highlightBoardCursor(board)
+			],
 			function(event, info)
 			{
-				var rect = new Rectangle(CANVAS_OFFSET[0], CANVAS_OFFSET[1], 
-															info["caller"].width, info["caller"].height);
-				var p = new Point(event.pageX - CANVAS_OFFSET[0], event.pageY - CANVAS_OFFSET[1]);
-				if (rect.containsPoint(p))
-					info["coords"] = p;
+				getNormalizedDisplayCoordinates(event, info);
 			},
 			function(event, info)
 			{
-				window.render(ctx);
+				board.updateEvent.fire({"target": board});
 			}
 		)
 		canvas.onmousemove = onMouseMoveEvent.getCallable();
 
 		board.updateEvent = new Event(
 			"updateEvent",
-			[function(event, info){ window.render(ctx) }]
+			[function(event, info){ console.log("raent"); window.render(ctx) }]
 		);
 
 		window.render(ctx);

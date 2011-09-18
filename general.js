@@ -1,3 +1,18 @@
+function flattenArray(enumerable)
+{
+	var result = new Array;
+	for (var i in enumerable)
+	{
+		var elem = enumerable[i];
+		if (elem instanceof Array)
+			result = result.concat(flattenArray(elem));
+		else
+			result.push(elem);
+	}
+	return result;
+}
+
+
 function getElementOffset(node)
 {
 	var x = 0;

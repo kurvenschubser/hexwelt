@@ -38,6 +38,7 @@ BoardRenderer.prototype.render = function(ctx)
 		var layer = this.board.layers.values[i];
 		layer.getRenderer().render(ctx);
 	}
+
 	ctx.restore();
 }
 
@@ -96,13 +97,18 @@ LayerRenderer.prototype.drawLayer = function(ctx, tile)
 	ctx.stroke();
 }
 
+LayerRenderer.prototype.moveContextToTile = function(ctx, tile)
+{
+	ctx.translate((tile.x * 2 + (tile.y % 2)) * UNITY_HEXWIDTH, tile.y * 1.5);
+}
+
 LayerRenderer.prototype.render = function(ctx)
 {	
 	for (var i = 0; i < this.layer.length; i++)
 	{
 		var tile = this.layer.getItem(i);	
 		ctx.save();
-		ctx.translate((tile.x * 2 + (tile.y % 2)) * UNITY_HEXWIDTH, tile.y * 1.5);
+		this.moveContextToTile(ctx, tile);
 		this.drawLayer(ctx, tile);
 		ctx.restore();
 	}
@@ -153,3 +159,39 @@ HighlightRenderer.prototype.drawLayer = function(ctx, tile)
 	ctx.fill();
 }
 
+
+function MovableRenderer(layer)
+{
+	this.layer = layer;
+}
+
+MovableRenderer.prototype = new LayerRenderer();
+
+MovableRenderer.prototype.drawLayer = function(ctx, movable)
+{
+	throw new Error("NotImplementedError");
+}
+
+MovableRenderer.prototype.render = function(ctx)
+{
+	for (var i = 0; i < this.layer.length; i++)
+	{
+		var movable = this.layer.getItem(i);
+		this.moveContextToTile(ctx, movable.getTile());
+		this.drawLayer(ctx, movable);
+	}
+}
+
+function DragonRenderer(layer)
+{
+	this.layer = layer;
+}
+
+DragonRenderer.prototype = new MovableRenderer();
+
+DragonRenderer.prototype.drawLayer = function(ctx, movable)
+{
+	var img = IMAGES["dragon.png"];	
+	var dims = resizeThumbnail(img.width, img.height, 2 * UNITY_HEXWIDTH, 2);
+	ctx.drawImage(img, 0, 0, dims[0], dims[1]);
+}

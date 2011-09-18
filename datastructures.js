@@ -77,14 +77,14 @@ OrderedDict.prototype.__defineGetter__(
 OrderedDict.prototype.getItem = function(key)
 {
 	if (!(this.kv[key]))
-		throw new Exception("KeyError: '" + key + "'.");
+		throw new Error("KeyError: '" + key + "'.");
 	return this.kv[key];
 }
 
 OrderedDict.prototype.setItem = function(key, value)
 {
 	if (key in this.kv)
-		throw new Exception("KeyError: '" + key + "'.");
+		throw new Error("KeyError: '" + key + "'.");
 	this.keys.push(key);
 	this.kv[key] = value;
 }

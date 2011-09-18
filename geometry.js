@@ -1,6 +1,9 @@
 "use strict";
 
 
+var UNITY_HEXWIDTH = Math.sqrt(0.75);
+
+
 function Hexagon(x, y, radius)
 {
 	this.x = x;
