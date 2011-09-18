@@ -245,6 +245,7 @@ HTML Canvas element demo
 		board.layers.setItem("dragon", (new Layer("dragon", DragonRenderer)));
 		
 		var poldi = new Dragon("Poldi");
+		board.movables.push(poldi);
 		poldi.setTile(tiles[9][2]);
 		
 		board.setGroupOnLayer("dragon", [poldi]);
@@ -299,8 +300,11 @@ HTML Canvas element demo
 		board.selectionEvent.connect(
 			function(event, info)
 			{
+				alert("selectionEvent>");
+				
 				for (var i in board.movables)
 				{
+					alert("selectionEvent> board.movables[" + i + "] = " + board.movables[i]);
 					board.movables[i].selected = (board.movables[i].getTile() === event.tile);
 				}
 			}

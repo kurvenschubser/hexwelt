@@ -3,6 +3,7 @@
 function Board(tiles)
 {
 	this.tiles = [];
+	this.movables = [];
 	var tmptiles = tiles || [];
 	for (var row in (tmptiles))
 	{
