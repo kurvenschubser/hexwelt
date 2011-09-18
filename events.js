@@ -4,7 +4,7 @@
 function Event(name, callbacks, prepFunc, exitFunc)
 {
 	this.name = name;
-	this.callbacks = callbacks;
+	this.callbacks = callbacks || [];
 	this.prepFunc = prepFunc;
 	this.exitFunc = exitFunc;
 }
@@ -53,7 +53,6 @@ function getNormalizedDisplayCoordinates(event, info)
 }
 
 
-// Wrapper to construct callback for event 'onmouseover'
 function getTileFromDisplayCoordinates(renderer)
 {
 	var board = renderer.board;

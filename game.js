@@ -15,6 +15,8 @@ function Board(tiles)
 	this.layers = new OrderedDict([
 		["background", new Layer("background", BackgroundRenderer)],
 		["highlight", new Layer("highlight", HighlightRenderer)],
+		["selection", new Layer("selection", HighlightRenderer)],
+		["pathfinder", new Layer("pathfinder", HighlightRenderer)],
 		["grid", new Layer("grid", GridRenderer)]
 	]);
 }
@@ -23,6 +25,21 @@ Board.prototype.setGroupOnLayer = function(layername, group)
 {
 	// add groups of whatever on a layer
 	this.layers.getItem(layername).setGroup(group);
+}
+
+Board.prototype.getSelected = function()
+{
+	return this.selected;
+}
+
+Board.prototype.setSelected = function(tile)
+{
+	this.selectionEvent.fire({"target": this, "tile": tile});
+	this.selected = tile;
+	var layer = this.layers.getItem("selection");
+	layer.clear();
+	layer.push(tile);
+	this.updateEvent.fire({"target": this});
 }
 
 Board.prototype.setTile = function(tile, row, col)
@@ -108,6 +125,7 @@ Layer.prototype.setGroup = function(group)
 function Movable(name)
 {
 	this.name = name;
+	this.selected = false;
 }
 
 Movable.prototype.setTile = function(tile)

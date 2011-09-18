@@ -269,10 +269,8 @@ HTML Canvas element demo
 				showCursorCoordinates("Coordinates"), 
 				highlightBoardCursor(board)
 			],
-			function(event, info)
-			{
-				getNormalizedDisplayCoordinates(event, info);
-			},
+			getNormalizedDisplayCoordinates,
+			// XXX Determine whether to fire the updateEvent in the callbacks above.
 			function(event, info)
 			{
 				board.updateEvent.fire({"target": board});
@@ -280,12 +278,45 @@ HTML Canvas element demo
 		)
 		canvas.onmousemove = onMouseMoveEvent.getCallable();
 
+		var onMouseDownEvent = new Event(
+			"onmousedown",
+			[
+				getTileFromDisplayCoordinates(renderer),
+				selectTile(board),
+				function(event, info){ alert("poldi.selected = " + poldi.selected) }
+			],
+			getNormalizedDisplayCoordinates
+		)
+		canvas.onmousedown = onMouseDownEvent.getCallable();
+
 		board.updateEvent = new Event(
 			"updateEvent",
-			[function(event, info){ console.log("raent"); window.render(ctx) }]
+			[function(event, info){ window.render(ctx) }]
+		);
+		
+		board.selectionEvent = new Event("selectionEvent");
+		
+		board.selectionEvent.connect(
+			function(event, info)
+			{
+				for (var i in board.movables)
+				{
+					board.movables[i].selected = (board.movables[i].getTile() === event.tile);
+				}
+			}
 		);
 
 		window.render(ctx);
+	}
+
+
+	function selectTile(board)
+	{
+		return function(event, info)
+		{
+			if (info.currentTile)
+				board.setSelected(info.currentTile);
+		}
 	}
 
 
