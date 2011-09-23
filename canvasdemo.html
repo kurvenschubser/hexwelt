@@ -4,9 +4,11 @@ HTML Canvas element demo
 
 <head>
 <title>HTML Canvas element demo</title>
+
 <script src="general.js" type="application/javascript;version=1.8"></script>
 <script src="geometry.js" type="application/javascript;version=1.8"></script>
 <script src="datastructures.js" type="application/javascript;version=1.8"></script>
+<script src="pathfinding.js" type="application/javascript;version=1.8"></script>
 <script src="game.js" type="application/javascript;version=1.8"></script>
 <script src="render.js" type="application/javascript;version=1.8"></script>
 <script src="windows.js" type="application/javascript;version=1.8"></script>
@@ -17,6 +19,19 @@ HTML Canvas element demo
 <script type="application/javascript;version=1.8">
 	"use strict";
 
+	function findPathOnNodes(nodes)
+	{
+		return function(event, info)
+		{
+			var movable = info.caller;
+			movable.waypoints = new AStar(nodes, movable).find(
+										event.startNode, event.goalNode);
+			
+			
+			alert(movable.waypoints);
+			
+		}
+	}
 
 	// Wrapper to construct callback for event 'onmouseover'
 	function highlightBoardCursor(board)
@@ -25,9 +40,25 @@ HTML Canvas element demo
 		{
 			var highlightLayer = board.layers.getItem("highlight");
 			highlightLayer.clear();
-			if (info["currentTile"])
+			if (info.currentTile)
 				highlightLayer.push(info.currentTile);
 		}
+	}
+	
+	function highlightMovablePath(board)
+	{
+		return function(event, info)
+		{
+			highlightPath(board, info.waypoints);
+		}
+	}
+	
+	function highlightPath(board, waypoints)
+	{
+		var highlightLayer = board.layers.getItem("highlight");
+		// highlightLayer.clear()
+		if (waypoints && waypoints.length)
+			highlightLayer.extend(waypoints);
 	}
 
 	function mapBoardCoordinatesToDisplayCoordinates(renderer, bx, by)
@@ -46,37 +77,19 @@ HTML Canvas element demo
 		var col = trueDiv(cx - (row % 2) * scales[0] * UNITY_HEXWIDTH, scales[0] * UNITY_HEXWIDTH * 2);
 		var hex = new Hexagon((col + (row % 2) * 0.5) * scales[0] * UNITY_HEXWIDTH * 2, row * scales[1] * 1.5, scales[1]);
 
-		if (hex.containsPoint(new Point(cx, cy)))
+		if (!hex.containsPoint(new Point(cx, cy)))
 		{
-			
-			//return [col, row];
-		}
-		else
-		{
+			row -= 1;
 			var center = hex.getCenter();
 			if (cx < center.x)
 			{
-				if (row % 2)
-				{
-					row -= 1;
-				}
-				else
-				{
+				if (!(row % 2))
 					col -= 1;
-					row -= 1;
-				}
 			}
 			else
 			{
 				if (row % 2)
-				{
 					col += 1;
-					row -= 1;
-				}
-				else
-				{
-					row -= 1;
-				}
 			}
 		}
 		if (!(-1 < col && col < board.cols && -1 < row && row < board.rows))
@@ -84,156 +97,156 @@ HTML Canvas element demo
 		return [col, row];
 	}
 	var mapd2b = mapDisplayCoordinatesToBoardCoordinates;
-
-
+	
 	function run()
 	{
 		IMAGES = new ImagePreFetcher(["eagle.jpg", "dragon.png"]).fetch();
 		var tiles = [
 			[
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile()
+				new Tile({"visible": true})
 			],
 			[
-				new Tile()
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			],
 			[
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile(),
-				new Tile()
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true}),
+				new Tile({"visible": true})
 			]
 		];
+		
 	
 		var board = new Board(tiles);
 		
@@ -246,14 +259,13 @@ HTML Canvas element demo
 		
 		var poldi = new Dragon("Poldi");
 		board.movables.push(poldi);
-		poldi.setTile(tiles[9][2]);
-		
+		poldi.setTile(tiles[9][2]);		
 		board.setGroupOnLayer("dragon", [poldi]);
 
 		var renderer = new BoardRenderer(board, IMAGES["eagle.jpg"]);
-		var window = new Window(renderer);
-		window.setBoundingBox(20, 20, 728, 492);
-		window.background = "lightpink";
+		var win = new Window(renderer);
+		win.setBoundingBox(20, 20, 728, 492);
+		win.background = "lightpink";
 		var canvas = document.getElementById("DemoCanvas");
 		
 		CANVAS_OFFSET = getElementOffset(canvas);
@@ -268,7 +280,15 @@ HTML Canvas element demo
 			[	
 				getTileFromDisplayCoordinates(renderer), 
 				showCursorCoordinates("Coordinates"), 
-				highlightBoardCursor(board)
+				highlightBoardCursor(board),
+				function(event, info)
+				{
+					var movable = board.getSelectedMovable();
+					if (movable)
+					{
+						highlightPath(board, movable.waypoints);
+					}
+				}
 			],
 			getNormalizedDisplayCoordinates,
 			// XXX Determine whether to fire the updateEvent in the callbacks above.
@@ -284,7 +304,6 @@ HTML Canvas element demo
 			[
 				getTileFromDisplayCoordinates(renderer),
 				selectTile(board),
-				function(event, info){ alert("poldi.selected = " + poldi.selected) }
 			],
 			getNormalizedDisplayCoordinates
 		)
@@ -292,7 +311,12 @@ HTML Canvas element demo
 
 		board.updateEvent = new Event(
 			"updateEvent",
-			[function(event, info){ window.render(ctx) }]
+			[
+				function(event, info)
+				{
+					win.render(ctx);
+				}
+			]
 		);
 		
 		board.selectionEvent = new Event("selectionEvent");
@@ -300,17 +324,30 @@ HTML Canvas element demo
 		board.selectionEvent.connect(
 			function(event, info)
 			{
-				alert("selectionEvent>");
-				
+				if (!(event.newSelection))
+					return;
+
 				for (var i in board.movables)
 				{
-					alert("selectionEvent> board.movables[" + i + "] = " + board.movables[i]);
-					board.movables[i].selected = (board.movables[i].getTile() === event.tile);
+					var movable = board.movables[i];
+					if (movable.selected && (movable.getTile() === event.oldSelection))
+					{
+						if (movable.getTile() !== event.newSelection)
+						{
+							movable.setTile(event.newSelection);
+							movable.selected = false;			
+							info.caller.setSelection(null);
+						}
+					}
+					else
+						movable.selected = (movable.getTile() === event.newSelection)
 				}
 			}
 		);
+		
+		poldi.pathRequestEvent.connect(findPathOnNodes(board.tiles));
 
-		window.render(ctx);
+		win.render(ctx);
 	}
 
 
@@ -319,7 +356,7 @@ HTML Canvas element demo
 		return function(event, info)
 		{
 			if (info.currentTile)
-				board.setSelected(info.currentTile);
+				board.setSelection(info.currentTile);
 		}
 	}
 
@@ -346,7 +383,7 @@ HTML Canvas element demo
 </script>
 
 </head>
-<body onload="run()">
+<body onload="setTimeout(run, 1000);">
 <h1 style="font: italic 2em Helvetica;">Canvas Demo (built for Gecko >= 3)</h1>
 <div>
 	<canvas id="DemoCanvas" style="border: 0px solid black;">Your browser does not support the canvas element.</canvas>

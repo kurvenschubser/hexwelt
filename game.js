@@ -2,8 +2,9 @@
 
 function Board(tiles)
 {
-	this.tiles = [];
 	this.movables = [];
+	this.selection = null;
+	this.tiles = [];
 	var tmptiles = tiles || [];
 	for (var row in (tmptiles))
 	{
@@ -28,18 +29,29 @@ Board.prototype.setGroupOnLayer = function(layername, group)
 	this.layers.getItem(layername).setGroup(group);
 }
 
-Board.prototype.getSelected = function()
+Board.prototype.getSelectedMovable = function()
 {
-	return this.selected;
+	for (var i in this.movables)
+	{
+		if (this.movables[i].selected)
+			return this.movables[i];
+	}
 }
 
-Board.prototype.setSelected = function(tile)
+Board.prototype.getSelection = function()
 {
-	this.selectionEvent.fire({"target": this, "tile": tile});
-	this.selected = tile;
+	return this.selection;
+}
+
+Board.prototype.setSelection = function(tile)
+{
 	var layer = this.layers.getItem("selection");
 	layer.clear();
-	layer.push(tile);
+	var old = this.selection;
+	this.selection = tile;
+	this.selectionEvent.fire({"target": this, "newSelection": tile, "oldSelection": old});
+	if (this.selection)
+		layer.push(this.selection);
 	this.updateEvent.fire({"target": this});
 }
 
@@ -52,8 +64,8 @@ Board.prototype.setTile = function(tile, row, col)
 		this.tiles[row] = [];
 	}
 	this.tiles[row][col] = tile;	
-	tile.x = col;
-	tile.y = row;
+	tile.x = parseInt(col);
+	tile.y = parseInt(row);
 	this._updateDimensions();
 }
 
@@ -122,29 +134,55 @@ Layer.prototype.setGroup = function(group)
 	}
 }
 
+Layer.prototype.toString = function()
+{
+	return "<Layer(" + List.prototype.toString.call(this) + ")>";
+}
+
 
 function Movable(name)
 {
 	this.name = name;
 	this.selected = false;
+
+	// Base value for how many tiles per turn this instance can move
+	this.speed = 1;
+
+	// Used for moving the instance along a path
+	this.waypoints = [];
+
+	// Determines the progress moving along the waypoints
+	this.currentWaypoint = null;
+	
+	// events
+	this.pathRequestEvent = new Event("pathRequestEvent");
 }
 
 Movable.prototype.setTile = function(tile)
 {
 	if (!(tile instanceof Tile))
 		throw new Error("TypeError: need instance of 'Tile', got '" + (typeof tile) + "'.");
+	this.pathRequestEvent.fire({"target": this, "startNode": this.tile, "goalNode": tile});
 	this.tile = tile;
 }
 
 Movable.prototype.getTile = function()
 {
 	if (!(this.tile))
-		throw new Error("AttributeError: tile.");
+	{
+		console.trace();
+		throw new Error("AttributeError: tile on " + this);
+	}
 	return this.tile;
 }
 
+Movable.prototype.toString = function()
+{
+	return "<Movable '" + this.name + "'>";
+}
 
-function Tile(coord, attrs)
+
+function Tile(attrs)
 {
 	this._attrs = attrs;
 	this.x = null;		// Internal: never set this in user code.

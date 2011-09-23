@@ -1,3 +1,17 @@
+function getElementOffset(node)
+{
+	var x = 0;
+	var y = 0;
+	while (node)
+	{
+		x += node.offsetLeft - node.scrollLeft;
+		y += node.offsetTop - node.scrollTop;
+		node = node.offsetParent;
+	}
+	return [x, y];
+}
+
+
 function flattenArray(enumerable)
 {
 	var result = new Array;
@@ -13,17 +27,26 @@ function flattenArray(enumerable)
 }
 
 
-function getElementOffset(node)
+function intCompare(a, b)
 {
-	var x = 0;
-	var y = 0;
-	while (node)
+	return parseInt(a) - parseInt(b); 
+}
+
+
+function NotImplementedError(){};
+
+
+function printObject(obj)
+{
+	var res = [];
+	for (var i in obj)
 	{
-		x += node.offsetLeft - node.scrollLeft;
-		y += node.offsetTop - node.scrollTop;
-		node = node.offsetParent;
+		var repr = obj[i];
+		if (obj[i].toString)
+			repr = obj[i].toString();
+		res.push(i + ": " + repr);
 	}
-	return [x, y];
+	return "{" + res.join(", ") + "}";
 }
 
 
@@ -37,3 +60,4 @@ String.prototype.rsplit = function(sep, maxsplit) {
     var split = this.split(sep);
     return maxsplit ? [ split.slice(0, -maxsplit).join(sep) ].concat(split.slice(-maxsplit)) : split;
 }
+

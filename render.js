@@ -169,7 +169,7 @@ MovableRenderer.prototype = new LayerRenderer();
 
 MovableRenderer.prototype.drawLayer = function(ctx, movable)
 {
-	throw new Error("NotImplementedError");
+	throw new NotImplementedError;
 }
 
 MovableRenderer.prototype.render = function(ctx)

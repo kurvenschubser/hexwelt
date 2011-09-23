@@ -2,12 +2,21 @@
 TODO
 ====
 
-Moving of movables
-Main event loop
 Animation of movables
+Path finding
+Animated moving along path between tiles
+list.pop(index) a la python
+Terrain properties
+Terrain modifiers (ways etc)
+Fog of war
+Weather (?)
+Scrolling
+Sound
 Middleware
 
 
 ====
 DONE
 ====
+
+Moving of movables

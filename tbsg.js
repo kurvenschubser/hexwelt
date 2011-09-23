@@ -7,3 +7,8 @@ function Dragon(name)
 }
 
 Dragon.prototype = new Movable;
+
+Dragon.prototype.toString = function()
+{
+	return "<Dragon '" + this.name + "'>";
+}
