@@ -97,7 +97,11 @@ AStar.prototype.find = function(start, goal)
 		
 		
 		if (x === goal)
-			return this.reconstructPath(cameFrom, cameFrom[goal]);
+		{
+			if (goal in cameFrom)
+				return this.reconstructPath(cameFrom, cameFrom[goal]);
+			return [];
+		}
 		
 		openSet.splice(openSet.indexOf(x), 1);
 		if (closedSet.indexOf(x) == -1)	// x not in closedSet

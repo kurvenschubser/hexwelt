@@ -294,11 +294,8 @@ HTML Canvas element demo
 				{
 					poldi.pathRequestEvent.fire({"target": poldi, "startNode": poldi.tile, 
 																"endNode": event.newCursor});
-					
-					alert("startNode = " + poldi.tile + ", endNode" + event.newCursor + ", waypoints = " + poldi.waypoints);
-					
-					if (poldi.waypoints && poldi.waypoints.length)
-						info.caller.setGroupOnLayer("highlight", poldi.waypoints.concat([event.newCursor]));
+					info.caller.setGroupOnLayer("pathfinder", poldi.waypoints.concat(
+																						[event.newCursor]));
 				}
 				else
 				{
