@@ -49,23 +49,35 @@ HTML Canvas element demo
 
 		if (!hex.containsPoint(new Point(cx, cy)))
 		{
-			row -= 1;
 			var center = hex.getCenter();
 			if (cx < center.x)
 			{
-				if (!(row % 2))
+				if (row % 2)
+				{
+					row -= 1;
+				}
+				else
+				{
 					col -= 1;
+					row -= 1;
+				}
 			}
 			else
 			{
 				if (row % 2)
+				{
 					col += 1;
+					row -= 1;
+				}
+				else
+				{
+					row -= 1;
+				}
 			}
-		}		
+		}
+
 		if (!(-1 < col && col < board.cols && -1 < row && row < board.rows))
 			return;
-
-		alert([col, row]);
 
 		return [col, row];
 	}
