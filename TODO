@@ -3,16 +3,17 @@ TODO
 ====
 
 Animation of movables
-Path finding
 Animated moving along path between tiles
-list.pop(index) a la python
 Terrain properties
 Terrain modifiers (ways etc)
 Fog of war
 Weather (?)
+Map-def from file/json
+PathfinderRenderer
+Middleware
+list.pop(index) a la python
 Scrolling
 Sound
-Middleware
 
 
 ====
@@ -20,3 +21,4 @@ DONE
 ====
 
 Moving of movables
+Path finding
