@@ -25,7 +25,16 @@ AStar.prototype.estimateCost = function(start, goal)
 AStar.prototype.getDistanceBetween = function(start, goal)
 {
 	// return direct line length between the nodes
-	return Math.sqrt(Math.pow((goal.x - start.x), 2) + Math.pow((goal.y - start.y), 2));
+	
+	var startHex = new Hexagon((start.x + (start.y % 2) * 0.5) * UNITY_HEXWIDTH, start.y * 1.5, 1);
+	var endHex = new Hexagon((goal.x + (goal.y % 2) * 0.5) * UNITY_HEXWIDTH, goal.y * 1.5, 1);
+	var sc = startHex.getCenter();
+	var ec = endHex.getCenter();
+	
+	console.log(startHex + ", " + endHex + ", " + sc + ", " +  ec + 
+		" disctance = " + Math.sqrt(Math.pow((ec.x - sc.x), 2) + Math.pow((ec.y - sc.y), 2)));
+	
+	return Math.sqrt(Math.pow((ec.x - sc.x), 2) + Math.pow((ec.y - sc.y), 2));
 }
 
 AStar.prototype.getNeighbors = function(node)
