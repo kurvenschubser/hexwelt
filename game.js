@@ -4,6 +4,8 @@ function Board(tiles)
 {
 	this.movables = [];
 	this.selection = null;
+	this._cursor = null;
+
 	this.tiles = [];
 	var tmptiles = tiles || [];
 	for (var row in (tmptiles))
@@ -21,12 +23,68 @@ function Board(tiles)
 		["pathfinder", new Layer("pathfinder", HighlightRenderer)],
 		["grid", new Layer("grid", GridRenderer)]
 	]);
+	
+	// Events
+	this.selectionEvent = new Event("selectionEvent");
+	this.cursorChangedEvent = new Event("cursorChanged");
+}
+
+Board.prototype.__defineGetter__(
+	"cursor", 
+	function()
+	{
+		return this._cursor;
+	}
+);
+
+Board.prototype.__defineSetter__(
+	"cursor",
+	function(tile)
+	{
+		if (this._cursor !== tile)
+		{
+			this.cursorChangedEvent.fire(
+				{"target": this, "oldCursor": this._cursor, "newCursor": tile}
+			);
+			this._cursor = tile;
+		}
+	}
+);
+
+Board.prototype.findPathForMovable = function(movable, endNode)
+{
+	return (new AStar(this.tiles, movable)).find(movable.getTile(), endNode);
 }
 
 Board.prototype.setGroupOnLayer = function(layername, group)
 {
 	// add groups of whatever on a layer
 	this.layers.getItem(layername).setGroup(group);
+}
+
+Board.prototype.getMovables = function()
+{
+	return this.movables;
+}
+
+Board.prototype.setMovables = function(movables)
+{
+	this.movables = [];
+	for (var i in movables)
+	{
+		var m = movables[i];
+		this.getMovables().push(m);
+		var board = this;
+		m.pathRequestEvent.connect(
+			(function()
+			{
+				return function(event, info)
+				{
+					m.waypoints = board.findPathForMovable(m, event.endNode);
+				}
+			})()
+		)
+	}
 }
 
 Board.prototype.getSelectedMovable = function()
@@ -50,6 +108,10 @@ Board.prototype.setSelection = function(tile)
 	var old = this.selection;
 	this.selection = tile;
 	this.selectionEvent.fire({"target": this, "newSelection": tile, "oldSelection": old});
+
+	// A callback connected to *selectionEvent* might have altered 
+	// *this.selection* when it was called through *selectionEvent* 
+	// in the line above. So *this.selection* is not neccessarily *tile*.
 	if (this.selection)
 		layer.push(this.selection);
 	this.updateEvent.fire({"target": this});
@@ -162,7 +224,7 @@ Movable.prototype.setTile = function(tile)
 {
 	if (!(tile instanceof Tile))
 		throw new Error("TypeError: need instance of 'Tile', got '" + (typeof tile) + "'.");
-	this.pathRequestEvent.fire({"target": this, "startNode": this.tile, "goalNode": tile});
+	this.pathRequestEvent.fire({"target": this, "startNode": this.tile, "endNode": tile});
 	this.tile = tile;
 }
 

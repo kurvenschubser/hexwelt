@@ -57,18 +57,7 @@ AStar.prototype.getNeighbors = function(node)
 
 AStar.prototype.getLowestFScore = function(nodes)
 {
-	try
-	{
-		sortedFScore = nodes.items.sort(this.compareNodes);
-	}
-	catch(e)
-	{
-		console.log("AStar.getLowestFScore> Exception: nodes.keys = " + nodes.keys);
-	}
-	
-	console.log("AStar.getLowestFScore> sortedFScore = " + sortedFScore);
-	console.log("AStar.getLowestFScore> sortedFScore[0][0] = " + sortedFScore[0][0]);
-	
+	sortedFScore = nodes.items.sort(this.compareNodes);
 	return sortedFScore[0][0];
 }
 

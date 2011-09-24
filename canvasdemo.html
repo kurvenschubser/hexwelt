@@ -1,6 +1,8 @@
+
 <!--
 HTML Canvas element demo
 -->
+
 
 <head>
 <title>HTML Canvas element demo</title>
@@ -19,46 +21,14 @@ HTML Canvas element demo
 <script type="application/javascript;version=1.8">
 	"use strict";
 
-	function findPathOnNodes(nodes)
-	{
-		return function(event, info)
-		{
-			var movable = info.caller;
-			movable.waypoints = new AStar(nodes, movable).find(
-										event.startNode, event.goalNode);
-			
-			
-			alert(movable.waypoints);
-			
-		}
-	}
-
 	// Wrapper to construct callback for event 'onmouseover'
 	function highlightBoardCursor(board)
 	{
 		return function(event, info)
 		{
-			var highlightLayer = board.layers.getItem("highlight");
-			highlightLayer.clear();
 			if (info.currentTile)
-				highlightLayer.push(info.currentTile);
+				board.setGroupOnLayer("highlight", [info.currentTile]);
 		}
-	}
-	
-	function highlightMovablePath(board)
-	{
-		return function(event, info)
-		{
-			highlightPath(board, info.waypoints);
-		}
-	}
-	
-	function highlightPath(board, waypoints)
-	{
-		var highlightLayer = board.layers.getItem("highlight");
-		// highlightLayer.clear()
-		if (waypoints && waypoints.length)
-			highlightLayer.extend(waypoints);
 	}
 
 	function mapBoardCoordinatesToDisplayCoordinates(renderer, bx, by)
@@ -91,9 +61,12 @@ HTML Canvas element demo
 				if (row % 2)
 					col += 1;
 			}
-		}
+		}		
 		if (!(-1 < col && col < board.cols && -1 < row && row < board.rows))
 			return;
+
+		alert([col, row]);
+
 		return [col, row];
 	}
 	var mapd2b = mapDisplayCoordinatesToBoardCoordinates;
@@ -258,8 +231,8 @@ HTML Canvas element demo
 		board.layers.setItem("dragon", (new Layer("dragon", DragonRenderer)));
 		
 		var poldi = new Dragon("Poldi");
-		board.movables.push(poldi);
 		poldi.setTile(tiles[9][2]);		
+		board.setMovables([poldi]);
 		board.setGroupOnLayer("dragon", [poldi]);
 
 		var renderer = new BoardRenderer(board, IMAGES["eagle.jpg"]);
@@ -280,15 +253,7 @@ HTML Canvas element demo
 			[	
 				getTileFromDisplayCoordinates(renderer), 
 				showCursorCoordinates("Coordinates"), 
-				highlightBoardCursor(board),
-				function(event, info)
-				{
-					var movable = board.getSelectedMovable();
-					if (movable)
-					{
-						highlightPath(board, movable.waypoints);
-					}
-				}
+				signalCursorChangeIfApplicable(board)
 			],
 			getNormalizedDisplayCoordinates,
 			// XXX Determine whether to fire the updateEvent in the callbacks above.
@@ -307,20 +272,34 @@ HTML Canvas element demo
 			],
 			getNormalizedDisplayCoordinates
 		)
+
 		canvas.onmousedown = onMouseDownEvent.getCallable();
 
-		board.updateEvent = new Event(
-			"updateEvent",
-			[
-				function(event, info)
+		board.cursorChangedEvent.connect(
+			function(event, info)
+			{
+				if (poldi.speed > 0 && poldi.selected)
 				{
-					win.render(ctx);
+					poldi.pathRequestEvent.fire({"target": poldi, "startNode": poldi.tile, 
+																"endNode": event.newCursor});
+					
+					alert("startNode = " + poldi.tile + ", endNode" + event.newCursor + ", waypoints = " + poldi.waypoints);
+					
+					if (poldi.waypoints && poldi.waypoints.length)
+						info.caller.setGroupOnLayer("highlight", poldi.waypoints.concat([event.newCursor]));
 				}
-			]
+				else
+				{
+					board.setGroupOnLayer("highlight", [event.newCursor]);
+				}
+			}
 		);
-		
-		board.selectionEvent = new Event("selectionEvent");
-		
+
+		board.cursorChangedEvent.exitFunc = function(event, info)
+		{
+			board.updateEvent.fire({});
+		}
+
 		board.selectionEvent.connect(
 			function(event, info)
 			{
@@ -344,12 +323,19 @@ HTML Canvas element demo
 				}
 			}
 		);
-		
-		poldi.pathRequestEvent.connect(findPathOnNodes(board.tiles));
 
-		win.render(ctx);
+		board.updateEvent = new Event(
+			"updateEvent",
+			[
+				function(event, info)
+				{
+					win.render(ctx);
+				}
+			]
+		);
+
+		board.updateEvent.fire({});
 	}
-
 
 	function selectTile(board)
 	{
@@ -359,7 +345,6 @@ HTML Canvas element demo
 				board.setSelection(info.currentTile);
 		}
 	}
-
 
 	function showCursorCoordinates(targetId)
 	{
@@ -374,6 +359,14 @@ HTML Canvas element demo
 		}
 	}
 
+	function signalCursorChangeIfApplicable(board)
+	{
+		return function(event, info)
+		{
+			if (info.currentTile)
+				board.cursor = info.currentTile;
+		}
+	}
 
 	function toggleGridDirection()
 	{
