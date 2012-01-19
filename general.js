@@ -1,3 +1,36 @@
+
+function ChunksIterator(nodes, step, firstEnd)
+{
+	this.nodes = nodes;
+	this.step = step;
+	this.firstEnd = firstEnd || step;
+	this.count = 0;
+}
+
+ChunksIterator.prototype.hasNext = function()
+{
+	return this.count < this.nodes.length;
+}
+
+ChunksIterator.prototype.getNext = function()
+{
+	if (this.count < this.firstEnd)
+		return this.nodes.slice(0, this.firstEnd)
+	var steps = trueDiv(this.nodes.length - this.firstEnd, this.step);
+	if (steps * this.step < this.nodes.length - this.firstEnd && 
+		this.nodes.length - this.firstEnd < (steps + 1) * this.step)
+	{
+		this.count += this.step;
+		return this.nodes.slice(this.count - this.step, this.count);
+	}
+	else
+	{
+		this.count += this.nodes.length - (this.firstEnd + steps * this.step);
+		return this.nodes.slice(this.firstEnd + steps * this.step, this.count);
+	}
+}
+
+
 function getElementOffset(node)
 {
 	var x = 0;
@@ -52,7 +85,8 @@ function printObject(obj)
 
 function trueDiv(dividend, divisor)
 {
-	return Math.round((dividend - dividend % divisor) / divisor);
+	//return Math.round((dividend - dividend % divisor) / divisor);
+	return Math.floor(dividend / divisor);
 }
 
 

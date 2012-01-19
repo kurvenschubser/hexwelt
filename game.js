@@ -97,7 +97,7 @@ Board.prototype.setMovables = function(movables)
 			{
 				return function(event, info)
 				{
-					m.waypoints = board.findPathForMovable(m, event.endNode);
+					m.waypoints = new Path(board.findPathForMovable(m, event.endNode));
 				}
 			})(this)
 		)
@@ -239,7 +239,7 @@ function Movable(name, resources)
 	this.speed = 1;
 
 	// Used for moving the instance along a path
-	this.waypoints = [];
+	this.path = new Path([]);
 
 	// Determines the progress moving along the waypoints
 	this.currentWaypoint = null;
@@ -264,41 +264,57 @@ function Movable(name, resources)
 	);
 }
 
-Movable.prototype.STATE = {
-	resting: 0,
-	moving: 1, 
-	attacking: 2, 
-	defending: 3, 
-	building: 4
-};
+Movable.prototype.getPosition = function()
+{
+	if (this.actions.length)
+	{
+		var action = movable.actions[0];
+		
+		console.debug(action);
+		
+		var index = trueDiv(action.completed, 1 / action.length);
+		
+		console.assert (this.path.waypoints.length >= action.start + index + 1);
+		
+		var wp1 = movable.path.waypoints[action.start + index];
+		var wp2 = movable.path.waypoints[action.start + index + 1];
+		
+		var xProgress = wp1.x + (wp2.x - wp1.x) * (action.completed % (1 / action.length))
+		var yProgress = wp1.y + (wp2.y - wp1.y) * (action.completed % (1 / action.length))
+		
+	}
+	else
+	{
+		return [(tile.x * 2+ (tile.y % 2)) * UNITY_HEXWIDTH, tile.y * 1.5];
+	}
+}
 
 Movable.prototype.move = function(tile)
 {
 	var curTile = this.getTile()
 	if (curTile != tile)
-		if (!(this.waypoints.length) || this.waypoints[this.waypoints.length - 1] !== tile)
+		if (!(this.path.waypoints.length) || this.path.waypoints[this.path.waypoints.length - 1] !== tile)
 			this.pathRequestEvent.fire({"target": this, 
 							"startNode": curTile, "endNode": tile});
 
-		console.assert (this.waypoints.length);
+		console.assert (this.path.waypoints.length);
 
 		this.currentWaypoint = curTile;
-		this.setTile(tile);
-		this.state = this.STATE.moving;
+		this.state = ACTIONS.MOVING;
 		
-		var minFirstEnd = Math.min(this.movementPoints + 1, this.waypoints.length);
-		var action = new Action(this.state, 0, minFirstEnd);
+		var minFirstEnd = Math.min(this.movementPoints + 1, this.path.waypoints.length);
+		var action = new Action(this.state);
 		this.actions.push(action);
-		if (minFirstEnd < this.waypoints.length)
+		if (minFirstEnd < this.path.waypoints.length)
 		{
 			// slice the path
 			for (var i = minFirstEnd;
-					i < this.waypoints.length; 
+					i < this.path.waypoints.length; 
 					i+=this.speed)
 			{
-				var minLastEnd = Math.min(i + this.speed + 1, this.waypoints.length);
+				var minLastEnd = Math.min(i + this.speed + 1, this.path.waypoints.length);
 				var action = new Action(this.state, i, minLastEnd);
-				this.actions.push(action)
+				this.actions.push(action);
 				console.debug(this.actions[this.actions.length - 1]);
 				
 			}

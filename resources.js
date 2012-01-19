@@ -32,6 +32,7 @@ Resource.prototype.setFrames = function(frames)
 	this.frameDuration = trueDiv(this.duration, this._frames.length)
 }
 
+
 function ResourceLoader()
 {
 	this.cache = {};

@@ -172,32 +172,18 @@ MovableRenderer.prototype.drawLayer = function(ctx, movable)
 	throw new NotImplementedError();
 }
 
+MovableRenderer.prototype.moveContextToMovable = function(ctx, movable)
+{
+	var pos = movable.getPosition();
+	ctx.translate(pos[0], pos[1]);
+}
+
 MovableRenderer.prototype.render = function(ctx)
 {
 	for (var i = 0; i < this.layer.length; i++)
 	{
 		var movable = this.layer.getItem(i);
-		if (movable.actions.length)
-		{
-			var action = movable.actions[0];
-			
-			console.debug(action);
-			
-			var index = trueDiv(action.completed, 1 / action.length);
-			
-			console.assert (movable.waypoints.length >= action.start + index + 1);
-			
-			var wp1 = movable.waypoints[action.start + index];
-			var wp2 = movable.waypoints[action.start + index + 1];
-			
-			var xProgress = wp1.x + (wp2.x - wp1.x) * (action.completed % (1 / action.length))
-			var yProgress = wp1.y + (wp2.y - wp1.y) * (action.completed % (1 / action.length))
-			ctx.translate(xProgress * UNITY_HEXWIDTH, yProgress * 1.5);
-		}
-		else
-		{
-			this.moveContextToTile(ctx, movable.getTile());
-		}
+		this.moveContextToMovable(movable);
 		this.drawLayer(ctx, movable);
 	}
 }

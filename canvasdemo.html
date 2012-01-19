@@ -328,7 +328,7 @@ HTML Canvas element demo
 				{
 					poldi.pathRequestEvent.fire({"target": poldi, "startNode": poldi.tile, 
 																"endNode": event.newCursor});
-					info.caller.setGroupOnLayer("pathfinder", poldi.waypoints.concat(
+					info.caller.setGroupOnLayer("pathfinder", poldi.path.waypoints.concat(
 																						[event.newCursor]));
 				}
 				else

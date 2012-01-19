@@ -145,3 +145,13 @@ AStar.prototype.find = function(start, goal)
 	throw new OutOfNodesError();		// There is no path
 }
 
+
+function Path(waypoints)
+{
+	this.waypoints = waypoints;
+}
+
+Path.prototype.iterChunks = function(step, firstEnd)
+{
+	return new ChunksIterator(this.waypoints, step, firstEnd);
+}
