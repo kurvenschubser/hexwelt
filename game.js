@@ -1,5 +1,23 @@
 "use strict";
 
+
+function Action(type, start, end)
+{
+	this.type = type;
+	this.start = start;
+	this.end = end;
+	this.completed = 0.0;
+}
+
+Action.prototype.__defineGetter__(
+	"length",
+	function()
+	{
+		return this.end - this.start;
+	}
+);
+
+
 function Board(tiles)
 {
 	this.movables = [];
@@ -74,15 +92,23 @@ Board.prototype.setMovables = function(movables)
 	{
 		var m = movables[i];
 		this.getMovables().push(m);
-		var board = this;
 		m.pathRequestEvent.connect(
-			(function()
+			(function(board)
 			{
 				return function(event, info)
 				{
 					m.waypoints = board.findPathForMovable(m, event.endNode);
 				}
-			})()
+			})(this)
+		)
+		m.updateEvent.connect(
+			(function(board)
+			{
+				return function(event, info)
+				{
+					board.updateEvent.fire({"target": board});
+				}
+			})(this)
 		)
 	}
 }
@@ -202,9 +228,11 @@ Layer.prototype.toString = function()
 }
 
 
-function Movable(name)
+function Movable(name, resources)
 {
 	this.name = name;
+	this.resources = resources;
+	
 	this.selected = false;
 
 	// Base value for how many tiles per turn this instance can move
@@ -216,15 +244,98 @@ function Movable(name)
 	// Determines the progress moving along the waypoints
 	this.currentWaypoint = null;
 	
+	this.movementPoints = this.speed;
+	
+	this.state = this.STATE.resting;
+	
+	this.actions = [];
+
 	// events
 	this.pathRequestEvent = new Event("pathRequestEvent");
+	this.updateEvent = new Event("updateEvent");
+	this.actionFinishedEvent = new Event(
+		"actionFinishedEvent",
+		[	
+			function(event, info)
+			{
+				info.caller.actions.splice(info.caller.actions.indexOf(event.action), 1);
+			}
+		]
+	);
+}
+
+Movable.prototype.STATE = {
+	resting: 0,
+	moving: 1, 
+	attacking: 2, 
+	defending: 3, 
+	building: 4
+};
+
+Movable.prototype.move = function(tile)
+{
+	var curTile = this.getTile()
+	if (curTile != tile)
+		if (!(this.waypoints.length) || this.waypoints[this.waypoints.length - 1] !== tile)
+			this.pathRequestEvent.fire({"target": this, 
+							"startNode": curTile, "endNode": tile});
+
+		console.assert (this.waypoints.length);
+
+		this.currentWaypoint = curTile;
+		this.setTile(tile);
+		this.state = this.STATE.moving;
+		
+		var minFirstEnd = Math.min(this.movementPoints + 1, this.waypoints.length);
+		var action = new Action(this.state, 0, minFirstEnd);
+		this.actions.push(action);
+		if (minFirstEnd < this.waypoints.length)
+		{
+			// slice the path
+			for (var i = minFirstEnd;
+					i < this.waypoints.length; 
+					i+=this.speed)
+			{
+				var minLastEnd = Math.min(i + this.speed + 1, this.waypoints.length);
+				var action = new Action(this.state, i, minLastEnd);
+				this.actions.push(action)
+				console.debug(this.actions[this.actions.length - 1]);
+				
+			}
+		}
+
+		if (this.actions.length < 2)		// trigger current action, if it is the only one.
+		{
+			var interval = 40;
+			setInterval(
+				(
+					function(m, interval)
+					{
+						return function()
+						{
+							var action = m.actions[0];
+							if (action.completed < 1.0)
+							{
+								action.completed += interval / (action.length * 1000);
+								m.updateEvent.fire({"target": m});
+							}
+							else
+							{
+								m.actionFinishedEvent.fire({"target": m, "action": action});
+							}
+						}
+					}
+				)(this, interval),
+				interval
+			)
+		}
 }
 
 Movable.prototype.setTile = function(tile)
 {
 	if (!(tile instanceof Tile))
 		throw new Error("TypeError: need instance of 'Tile', got '" + (typeof tile) + "'.");
-	this.pathRequestEvent.fire({"target": this, "startNode": this.tile, "endNode": tile});
+	// this.pathRequestEvent.fire({"target": this, "startNode": this.tile, "endNode": tile});
 	this.tile = tile;
 }
 
@@ -237,6 +348,16 @@ Movable.prototype.getTile = function()
 	}
 	return this.tile;
 }
+
+Movable.prototype.__defineGetter__(
+	"resource",
+	function()
+	{
+		if (!(this.state in this.resources))
+			throw new KeyError("State '" + this.state + "' not in resources for " + this);
+		return this.resources[this.state];
+	}
+);
 
 Movable.prototype.toString = function()
 {

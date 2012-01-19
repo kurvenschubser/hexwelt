@@ -29,11 +29,7 @@ AStar.prototype.getDistanceBetween = function(start, goal)
 	var startHex = new Hexagon((start.x + (start.y % 2) * 0.5) * UNITY_HEXWIDTH, start.y * 1.5, 1);
 	var endHex = new Hexagon((goal.x + (goal.y % 2) * 0.5) * UNITY_HEXWIDTH, goal.y * 1.5, 1);
 	var sc = startHex.getCenter();
-	var ec = endHex.getCenter();
-	
-	console.log(startHex + ", " + endHex + ", " + sc + ", " +  ec + 
-		" disctance = " + Math.sqrt(Math.pow((ec.x - sc.x), 2) + Math.pow((ec.y - sc.y), 2)));
-	
+	var ec = endHex.getCenter();	
 	return Math.sqrt(Math.pow((ec.x - sc.x), 2) + Math.pow((ec.y - sc.y), 2));
 }
 

@@ -85,7 +85,8 @@ HTML Canvas element demo
 	
 	function run()
 	{
-		IMAGES = new ImagePreFetcher(["eagle.jpg", "dragon.png"]).fetch();
+		RESOURCES = new ResourceLoader();
+
 		var tiles = [
 			[
 				new Tile({"visible": true}),
@@ -231,23 +232,56 @@ HTML Canvas element demo
 				new Tile({"visible": true})
 			]
 		];
-		
-	
+
+
 		var board = new Board(tiles);
-		
+
 		// static fields
 		board.setGroupOnLayer("background", flattenArray(tiles));
 		board.setGroupOnLayer("grid", flattenArray(tiles));
 		board.setGroupOnLayer("highlight", [tiles[1][1]]);
-		
-		board.layers.setItem("dragon", (new Layer("dragon", DragonRenderer)));
-		
-		var poldi = new Dragon("Poldi");
+
+		board.layers.setItem("dragon", (new Layer("dragon", MovableRenderer)));
+
+		var dragonRestingRes = new Resource("Dragon", "resting", "img", 
+			[
+				"resources/graphics/maenneken/moving/1.png",
+			],
+			272
+		);
+
+		var dragonMovingRes = new Resource("Dragon", "moving", "img", 
+			[
+				"resources/graphics/maenneken/moving/1.png",
+				"resources/graphics/maenneken/moving/2.png",
+				"resources/graphics/maenneken/moving/3.png",
+				"resources/graphics/maenneken/moving/4.png",
+				"resources/graphics/maenneken/moving/5.png",
+				"resources/graphics/maenneken/moving/6.png",
+				"resources/graphics/maenneken/moving/7.png",
+				"resources/graphics/maenneken/moving/8.png",
+				"resources/graphics/maenneken/moving/9.png",
+				"resources/graphics/maenneken/moving/10.png",
+				"resources/graphics/maenneken/moving/11.png",
+			],
+			3000
+		);
+
+		var dragonResources = {};
+		dragonResources[Movable.prototype.STATE.resting] = dragonRestingRes;
+		dragonResources[Movable.prototype.STATE.moving] = dragonMovingRes;
+		var poldi = new Dragon("Poldi", dragonResources);
 		poldi.setTile(tiles[9][2]);		
 		board.setMovables([poldi]);
 		board.setGroupOnLayer("dragon", [poldi]);
 
-		var renderer = new BoardRenderer(board, IMAGES["eagle.jpg"]);
+		var boardBgRes = new Resource("Board", "background", "img", ["eagle.jpg"], 0);
+		RESOURCES.load(boardBgRes);
+		
+		console.debug(RESOURCES.cache);
+		//while (RESOURCES._unfinished > 0){};		// block til image is loaded.
+		
+		var renderer = new BoardRenderer(board, boardBgRes.getFrames()[0]);
 		var win = new Window(renderer);
 		win.setBoundingBox(20, 20, 728, 492);
 		win.background = "lightpink";
@@ -322,8 +356,8 @@ HTML Canvas element demo
 					{
 						if (movable.getTile() !== event.newSelection)
 						{
-							movable.setTile(event.newSelection);
-							movable.selected = false;			
+							movable.move(event.newSelection);
+							movable.selected = false;
 							info.caller.setSelection(null);
 						}
 					}
