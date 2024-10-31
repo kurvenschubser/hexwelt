@@ -1,151 +1,202 @@
-function OutOfNodesError(){}
-
-OutOfNodesError.prototype.toString = function()
-{
-	return "OutOfNodesError";
+function OutOfNodesError(message) {
+  this.name = "OutOfNodesError";
+  this.message = message || "Default Message";
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, OutOfNodesError);
+  } else {
+    this.stack = new Error().stack;
+  }
 }
 
+// Inherit from Error
+OutOfNodesError.prototype = Object.create(Error.prototype);
+OutOfNodesError.prototype.constructor = OutOfNodesError;
 
-function AStar(nodes, movable)
-{
-	this.nodes = nodes;
-	this.movable = movable;
+OutOfNodesError.prototype.toString = function () {
+  return `${this.name}: ${this.message}`;
+};
+
+function AStar(nodes, movable) {
+  this.nodes = nodes;
+  this.movable = movable;
 }
 
-AStar.prototype.compareNodes = function(a, b)
-{
-	return a[1] - b[1];
-}
+AStar.prototype.compareNodes = function (a, b) {
+  return a[1] - b[1];
+};
 
-AStar.prototype.estimateCost = function(start, goal)
-{
-	return this.getDistanceBetween(start, goal);
-}
+AStar.prototype.estimateCost = function (start, goal) {
+  return this.getDistanceBetween(start, goal);
+};
 
-AStar.prototype.getDistanceBetween = function(start, goal)
-{
-	// return direct line length between the nodes
-	
-	var startHex = new Hexagon((start.x + (start.y % 2) * 0.5) * UNITY_HEXWIDTH, start.y * 1.5, 1);
-	var endHex = new Hexagon((goal.x + (goal.y % 2) * 0.5) * UNITY_HEXWIDTH, goal.y * 1.5, 1);
-	var sc = startHex.getCenter();
-	var ec = endHex.getCenter();
-	
-	console.log(startHex + ", " + endHex + ", " + sc + ", " +  ec + 
-		" disctance = " + Math.sqrt(Math.pow((ec.x - sc.x), 2) + Math.pow((ec.y - sc.y), 2)));
-	
-	return Math.sqrt(Math.pow((ec.x - sc.x), 2) + Math.pow((ec.y - sc.y), 2));
-}
+AStar.prototype.getDistanceBetween = function (start, goal) {
+  // return direct line length between the nodes
 
-AStar.prototype.getNeighbors = function(node)
-{
-	var col = node.x;
-	var row = node.y;
-	
-	var coords = (row % 2) 
-		? 
-		[[col, row - 1], [col + 1, row - 1], [col + 1, row], 
-		[col + 1, row + 1], [col, row + 1], [col - 1, row]] 
-		:
-		[[col - 1, row - 1], [col, row - 1], [col + 1, row], 
-		[col, row + 1], [col - 1, row + 1], [col - 1, row]];
-	var result = [];
-	for (var i in coords)
-	{
+  var startHex = new Hexagon(
+    (start.x + (start.y % 2) * 0.5) * UNITY_HEXWIDTH * 2,
+    start.y * 2 * UNITY_HEXWIDTH,
+    1
+  );
+  var endHex = new Hexagon(
+    (goal.x + (goal.y % 2) * 0.5) * UNITY_HEXWIDTH * 2,
+    goal.y * 2 * UNITY_HEXWIDTH,
+    1
+  );
+  var sc = startHex.getCenter();
+  var ec = endHex.getCenter();
 
-		if (-1 < coords[i][1] && coords[i][1] < this.nodes.length &&
-				-1 < coords[i][0] && coords[i][0] < this.nodes[coords[i][1]].length)
-		{
-			var n = this.nodes[coords[i][1]][coords[i][0]];
-			if (n && n.getAttr("visible"))
-				result.push(n);
-		}
-	}
-	return result;
-}
+  console.log(
+    "distance",
+    start,
+    startHex,
+    goal,
+    endHex,
+    Math.sqrt(Math.pow(ec.x - sc.x, 2) + Math.pow(ec.y - sc.y, 2))
+  );
 
-AStar.prototype.getLowestFScore = function(nodes)
-{
-	sortedFScore = nodes.items.sort(this.compareNodes);
-	return sortedFScore[0][0];
-}
+  return Math.sqrt(Math.pow(ec.x - sc.x, 2) + Math.pow(ec.y - sc.y, 2));
+};
 
-AStar.prototype.reconstructPath = function(cameFrom, currentNode)
-{
-	if (currentNode in cameFrom)
-	{
-		var p = this.reconstructPath(cameFrom, cameFrom[currentNode]);
-		p.push(currentNode);
-		return p;
-	}
-	return [currentNode];
-}
+AStar.prototype.getNeighbors = function (node) {
+  const result = [];
 
-AStar.prototype.find = function(start, goal)
-{
-	var closedSet = [];
-	var openSet = [start];
-	var cameFrom = {};
-	var gScore = {};
-	gScore[start] = 0;
-	var hScore = {};
-	hScore[start] = this.estimateCost(start, goal);
-	
-	// priority queue
-	var fScore = new OrderedDict([[start, gScore[start] + hScore[start]]]);
+  const col = node.x;
+  const row = node.y;
 
-	var dbgI = 0;
-	
-	while (openSet.length)
-	{
-		//if (dbgI > 4)
-		//	break;
-		
-		var x = this.getLowestFScore(fScore);
-		fScore.delItem(x);
-		
-		
-		if (x === goal)
-		{
-			if (goal in cameFrom)
-				return this.reconstructPath(cameFrom, cameFrom[goal]);
-			return [];
-		}
-		
-		openSet.splice(openSet.indexOf(x), 1);
-		if (closedSet.indexOf(x) == -1)	// x not in closedSet
-			closedSet.push(x);
+  const coords =
+    row % 2
+      ? [
+          [col, row - 1],
+          [col + 1, row - 1],
+          [col + 1, row],
+          [col + 1, row + 1],
+          [col, row + 1],
+          [col - 1, row],
+        ]
+      : [
+          [col - 1, row - 1],
+          [col, row - 1],
+          [col + 1, row],
+          [col, row + 1],
+          [col - 1, row + 1],
+          [col - 1, row],
+        ];
 
-		var neighbors = this.getNeighbors(x);
-		for (var j = 0; j < neighbors.length; j++)
-		{
-			var y = neighbors[j];
-			if (closedSet.indexOf(y) != -1)		// y in closedSet
-				continue;
-			var tentativeGScore = gScore[x] + this.getDistanceBetween(x, y);
-			tentativeIsBetter = false;
-			if (openSet.indexOf(y) == -1)		// y not in openSet
-			{
-				openSet.push(y)
-				tentativeIsBetter = true;
-			}
-			else if (tentativeGScore < gScore[y])
-			{
-				tentativeIsBetter = true;
-			}
+  for (const coord of coords) {
+    if (
+      -1 < coord[1] &&
+      coord[1] < this.nodes.length &&
+      -1 < coord[0] &&
+      coord[0] < this.nodes[coord[1]].length
+    ) {
+      const n = this.nodes[coord[1]][coord[0]];
+      if (n && n.getAttr("visible")) {
+        result.push(n);
+      }
+    }
+  }
 
-			if (tentativeIsBetter)
-			{
-				cameFrom[y] = x;
-				gScore[y] = tentativeGScore;
-				hScore[y] = this.estimateCost(y, goal);
-				fScore.setItem(y, gScore[y] + hScore[y]);
-			}
-		}
-		
-		//dbgI++;
-	
-	}
-	throw new OutOfNodesError();		// There is no path
-}
+  return result;
+};
 
+AStar.prototype.getLowestFScoreNode = function (nodes) {
+  const sortedFScore = Object.entries(nodes).sort(this.compareNodes);
+  const nodeKey = sortedFScore[0][0];
+  return this.nodes.flat().find((n) => n.toString() === nodeKey);
+};
+
+AStar.prototype.reconstructPath = function (cameFrom, currentNode) {
+  const totalPath = [currentNode];
+  while (
+    currentNode in cameFrom &&
+    !totalPath.includes(cameFrom[currentNode])
+  ) {
+    currentNode = cameFrom[currentNode];
+    totalPath.push(currentNode);
+  }
+  return totalPath.reverse();
+};
+
+AStar.prototype.find = function (start, goal) {
+  console.log(
+    "distance find",
+    start,
+    goal,
+    this.estimateCost(start, goal),
+    new Hexagon(
+      (start.x + (start.y % 2) * 0.5) * UNITY_HEXWIDTH * 2,
+      start.y * 2,
+      1
+    ),
+    new Hexagon(
+      (start.x + (start.y % 2) * 0.5) * UNITY_HEXWIDTH * 2,
+      start.y * 2,
+      1
+    ).getCenter(),
+    new Hexagon(
+      (goal.x + (goal.y % 2) * 0.5) * UNITY_HEXWIDTH * 2,
+      goal.y * 2,
+      1
+    ),
+    new Hexagon(
+      (goal.x + (goal.y % 2) * 0.5) * UNITY_HEXWIDTH * 2,
+      goal.y * 2,
+      1
+    ).getCenter()
+  );
+  const openSet = [start];
+
+  const cameFrom = {};
+
+  const gScore = { [start]: 0 };
+  const fScore = { [start]: this.estimateCost(start, goal) };
+
+  let dbgI = 0;
+
+  const coordinatesAreEqual = (a, b) => a.x === b.x && a.y === b.y;
+
+  while (openSet.length) {
+    //if (dbgI > 4)
+    //	break;
+
+    const current = this.getLowestFScoreNode(fScore);
+
+    if (coordinatesAreEqual(current, goal)) {
+      console.log("Found path", cameFrom, current, goal, gScore, fScore);
+      return this.reconstructPath(cameFrom, current);
+    }
+
+    openSet.splice(
+      openSet.findIndex((n) => coordinatesAreEqual(n, current)),
+      1
+    );
+    delete fScore[current];
+
+    const neighbors = this.getNeighbors(current);
+
+    // TODO: remove
+    console.log(
+      `neigbors distance to goal ${goal}`,
+      "\n" +
+        neighbors
+          .map((n) => `${n.toString()}: ${this.getDistanceBetween(goal, n)}`)
+          .join("\n")
+    );
+
+    for (const neighbor of neighbors) {
+      const tentativeGScore =
+        gScore[current] + this.getDistanceBetween(current, neighbor);
+      if (tentativeGScore < (gScore[neighbor] || Infinity)) {
+        cameFrom[neighbor] = current;
+        gScore[neighbor] = tentativeGScore;
+        fScore[neighbor] = tentativeGScore + this.estimateCost(neighbor, goal);
+        if (!openSet.includes(neighbor)) {
+          openSet.push(neighbor);
+        }
+      }
+    }
+
+    //dbgI++;
+  }
+  throw new OutOfNodesError(); // There is no path
+};

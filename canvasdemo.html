@@ -1,399 +1,349 @@
-
-<!--
+<!DOCTYPE html>
+<html>
+  <!--
 HTML Canvas element demo
 -->
+  <head>
+    <title>HTML Canvas element demo</title>
 
+    <script src="general.js" type="application/javascript"></script>
+    <script src="geometry.js" type="application/javascript"></script>
+    <script src="pathfinding.js" type="application/javascript"></script>
+    <script src="game.js" type="application/javascript"></script>
+    <script src="render.js" type="application/javascript"></script>
+    <script src="windows.js" type="application/javascript"></script>
+    <script src="events.js" type="application/javascript"></script>
+    <script src="resources.js" type="application/javascript"></script>
+    <script src="tbsg.js" type="application/javascript"></script>
 
-<head>
-<title>HTML Canvas element demo</title>
+    <script type="application/javascript">
+      "use strict";
 
-<script src="general.js" type="application/javascript;version=1.8"></script>
-<script src="geometry.js" type="application/javascript;version=1.8"></script>
-<script src="datastructures.js" type="application/javascript;version=1.8"></script>
-<script src="pathfinding.js" type="application/javascript;version=1.8"></script>
-<script src="game.js" type="application/javascript;version=1.8"></script>
-<script src="render.js" type="application/javascript;version=1.8"></script>
-<script src="windows.js" type="application/javascript;version=1.8"></script>
-<script src="events.js" type="application/javascript;version=1.8"></script>
-<script src="resources.js" type="application/javascript;version=1.8"></script>
-<script src="tbsg.js" type="application/javascript;version=1.8"></script>
+      // Wrapper to construct callback for event 'onmouseover'
+      function highlightBoardCursor(board) {
+        return function (event, info) {
+          if (info.currentTile)
+            board.setGroupOnLayer("highlight", [info.currentTile]);
+        };
+      }
 
-<script type="application/javascript;version=1.8">
-	"use strict";
+      function mapBoardCoordinatesToDisplayCoordinates(renderer, bx, by) {}
+      var mapb2d = mapBoardCoordinatesToDisplayCoordinates;
 
-	// Wrapper to construct callback for event 'onmouseover'
-	function highlightBoardCursor(board)
-	{
-		return function(event, info)
-		{
-			if (info.currentTile)
-				board.setGroupOnLayer("highlight", [info.currentTile]);
-		}
-	}
+      // XXX Move to render.js::BoardRenderer
+      function mapDisplayCoordinatesToBoardCoordinates(renderer, cx, cy) {
+        var board = renderer.board;
+        var scales = renderer.getScales();
+        var row = trueDiv(cy, scales[1] * 1.5);
+        var col = trueDiv(
+          cx - (row % 2) * scales[0] * UNITY_HEXWIDTH,
+          scales[0] * UNITY_HEXWIDTH * 2
+        );
+        var hex = new Hexagon(
+          (col + (row % 2) * 0.5) * scales[0] * UNITY_HEXWIDTH * 2,
+          row * scales[1] * 1.5,
+          scales[1]
+        );
 
-	function mapBoardCoordinatesToDisplayCoordinates(renderer, bx, by)
-	{
-		
-	}
-	var mapb2d = mapBoardCoordinatesToDisplayCoordinates;
+        if (!hex.containsPoint(new Point(cx, cy))) {
+          var center = hex.getCenter();
+          if (cx < center.x) {
+            if (row % 2) {
+              row -= 1;
+            } else {
+              col -= 1;
+              row -= 1;
+            }
+          } else {
+            if (row % 2) {
+              col += 1;
+              row -= 1;
+            } else {
+              row -= 1;
+            }
+          }
+        }
 
+        if (!(-1 < col && col < board.cols && -1 < row && row < board.rows))
+          return;
 
-	// XXX Move to render.js::BoardRenderer
-	function mapDisplayCoordinatesToBoardCoordinates(renderer, cx, cy)
-	{
-		var board = renderer.board;
-		var scales = renderer.getScales();
-		var row = trueDiv(cy, scales[1] * 1.5);
-		var col = trueDiv(cx - (row % 2) * scales[0] * UNITY_HEXWIDTH, scales[0] * UNITY_HEXWIDTH * 2);
-		var hex = new Hexagon((col + (row % 2) * 0.5) * scales[0] * UNITY_HEXWIDTH * 2, row * scales[1] * 1.5, scales[1]);
+        return [col, row];
+      }
+      var mapd2b = mapDisplayCoordinatesToBoardCoordinates;
 
-		if (!hex.containsPoint(new Point(cx, cy)))
-		{
-			var center = hex.getCenter();
-			if (cx < center.x)
-			{
-				if (row % 2)
-				{
-					row -= 1;
-				}
-				else
-				{
-					col -= 1;
-					row -= 1;
-				}
-			}
-			else
-			{
-				if (row % 2)
-				{
-					col += 1;
-					row -= 1;
-				}
-				else
-				{
-					row -= 1;
-				}
-			}
-		}
+      function getTiles() {
+        return [
+          [
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+          ],
+          [
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+          ],
+          [new Tile({ visible: true })],
+          [new Tile({ visible: true })],
+          [new Tile({ visible: true }), new Tile({ visible: true })],
+          [
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+          ],
+          [new Tile({ visible: true }), new Tile({ visible: true })],
+          [new Tile({ visible: true }), new Tile({ visible: true })],
+          [
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+          ],
+          [
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+          ],
+          [
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+          ],
+          [
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+            new Tile({ visible: true }),
+          ],
+        ];
+      }
 
-		if (!(-1 < col && col < board.cols && -1 < row && row < board.rows))
-			return;
+      function run() {
+        window.IMAGES = new ImagePreFetcher([
+          "eagle.jpg",
+          "dragon.png",
+        ]).fetch();
+        var canvas = document.getElementById("DemoCanvas");
 
-		return [col, row];
-	}
-	var mapd2b = mapDisplayCoordinatesToBoardCoordinates;
-	
-	function run()
-	{
-		IMAGES = new ImagePreFetcher(["eagle.jpg", "dragon.png"]).fetch();
-		var tiles = [
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			],
-			[
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true}),
-				new Tile({"visible": true})
-			]
-		];
-		
-	
-		var board = new Board(tiles);
-		
-		// static fields
-		board.setGroupOnLayer("background", flattenArray(tiles));
-		board.setGroupOnLayer("grid", flattenArray(tiles));
-		board.setGroupOnLayer("highlight", [tiles[1][1]]);
-		
-		board.layers.setItem("dragon", (new Layer("dragon", DragonRenderer)));
-		
-		var poldi = new Dragon("Poldi");
-		poldi.setTile(tiles[9][2]);		
-		board.setMovables([poldi]);
-		board.setGroupOnLayer("dragon", [poldi]);
+        window.CANVAS_OFFSET = getElementOffset(canvas);
 
-		var renderer = new BoardRenderer(board, IMAGES["eagle.jpg"]);
-		var win = new Window(renderer);
-		win.setBoundingBox(20, 20, 728, 492);
-		win.background = "lightpink";
-		var canvas = document.getElementById("DemoCanvas");
-		
-		CANVAS_OFFSET = getElementOffset(canvas);
-		
-		canvas.width = 768;
-		canvas.height = 512;
-		var ctx = canvas.getContext("2d");
+        canvas.width = 768;
+        canvas.height = 512;
+        var ctx = canvas.getContext("2d");
 
-		// begin of events
-		var onMouseMoveEvent = new Event(
-			"onmousemove", 
-			[	
-				getTileFromDisplayCoordinates(renderer), 
-				showCursorCoordinates("Coordinates"), 
-				signalCursorChangeIfApplicable(board)
-			],
-			getNormalizedDisplayCoordinates,
-			// XXX Determine whether to fire the updateEvent in the callbacks above.
-			function(event, info)
-			{
-				board.updateEvent.fire({"target": board});
-			}
-		)
-		canvas.onmousemove = onMouseMoveEvent.getCallable();
+        const tiles = getTiles();
+        var board = new Board(tiles);
 
-		var onMouseDownEvent = new Event(
-			"onmousedown",
-			[
-				getTileFromDisplayCoordinates(renderer),
-				selectTile(board),
-			],
-			getNormalizedDisplayCoordinates
-		)
+        // static fields
+        board.setGroupOnLayer("background", flattenArray(tiles));
+        board.setGroupOnLayer("grid", flattenArray(tiles));
+        board.setGroupOnLayer("highlight", [tiles[1][1]]);
 
-		canvas.onmousedown = onMouseDownEvent.getCallable();
+        board.layers.dragon = new Layer("dragon", DragonRenderer);
 
-		board.cursorChangedEvent.connect(
-			function(event, info)
-			{
-				if (poldi.speed > 0 && poldi.selected)
-				{
-					poldi.pathRequestEvent.fire({"target": poldi, "startNode": poldi.tile, 
-																"endNode": event.newCursor});
-					info.caller.setGroupOnLayer("pathfinder", poldi.waypoints.concat(
-																						[event.newCursor]));
-				}
-				else
-				{
-					board.setGroupOnLayer("highlight", [event.newCursor]);
-				}
-			}
-		);
+        var poldi = new Dragon("Poldi");
+        poldi.setTile(tiles[9][2]);
+        board.setMovables([poldi]);
+        board.setGroupOnLayer("dragon", [poldi]);
 
-		board.cursorChangedEvent.exitFunc = function(event, info)
-		{
-			board.updateEvent.fire({});
-		}
+        var renderer = new BoardRenderer(board, IMAGES["eagle.jpg"]);
+        var win = new Window(renderer);
+        win.setBoundingBox(20, 20, 728, 492);
+        win.background = "lightpink";
 
-		board.selectionEvent.connect(
-			function(event, info)
-			{
-				if (!(event.newSelection))
-					return;
+        // begin of events
+        var onMouseMoveEvent = new Event(
+          "onmousemove",
+          [
+            getTileFromDisplayCoordinates(renderer),
+            showCursorCoordinates("Coordinates"),
+            signalCursorChangeIfApplicable(board),
+          ],
+          getNormalizedDisplayCoordinates,
+          // XXX Determine whether to fire the updateEvent in the callbacks above.
+          function (event, info) {
+            board.updateEvent.fire({ target: board });
+          }
+        );
+        canvas.onmousemove = onMouseMoveEvent.getCallable();
 
-				for (var i in board.movables)
-				{
-					var movable = board.movables[i];
-					if (movable.selected && (movable.getTile() === event.oldSelection))
-					{
-						if (movable.getTile() !== event.newSelection)
-						{
-							movable.setTile(event.newSelection);
-							movable.selected = false;			
-							info.caller.setSelection(null);
-						}
-					}
-					else
-						movable.selected = (movable.getTile() === event.newSelection)
-				}
-			}
-		);
+        var onMouseDownEvent = new Event(
+          "onmousedown",
+          [getTileFromDisplayCoordinates(renderer), selectTile(board)],
+          getNormalizedDisplayCoordinates
+        );
 
-		board.updateEvent = new Event(
-			"updateEvent",
-			[
-				function(event, info)
-				{
-					win.render(ctx);
-				}
-			]
-		);
+        canvas.onmousedown = onMouseDownEvent.getCallable();
 
-		board.updateEvent.fire({});
-	}
+        board.cursorChangedEvent.connect(function (event, info) {
+          if (poldi.speed > 0 && poldi.selected) {
+            poldi.pathRequestEvent.fire({
+              target: poldi,
+              startNode: poldi.tile,
+              endNode: event.newCursor,
+            });
+            info.caller.setGroupOnLayer("pathfinder", poldi.waypoints);
+          } else {
+            board.setGroupOnLayer("highlight", [event.newCursor]);
+          }
+        });
 
-	function selectTile(board)
-	{
-		return function(event, info)
-		{
-			if (info.currentTile)
-				board.setSelection(info.currentTile);
-		}
-	}
+        board.cursorChangedEvent.exitFunc = function (event, info) {
+          board.updateEvent.fire({});
+        };
 
-	function showCursorCoordinates(targetId)
-	{
-		var target = document.getElementById(targetId)
-		return function(event, info)
-		{
-			var p = info["coords"];
-			if (p)
-			{
-				target.innerHTML = "(" + p.x + "," + p.y + ")";
-			}
-		}
-	}
+        board.selectionEvent.connect(function (event, info) {
+          if (!event.newSelection) return;
 
-	function signalCursorChangeIfApplicable(board)
-	{
-		return function(event, info)
-		{
-			if (info.currentTile)
-				board.cursor = info.currentTile;
-		}
-	}
+          for (var i in board.movables) {
+            var movable = board.movables[i];
+            if (movable.selected && movable.getTile() === event.oldSelection) {
+              if (movable.getTile() !== event.newSelection) {
+                movable.setTile(event.newSelection);
+                movable.selected = false;
+                info.caller.setSelection(null);
+              }
+            } else movable.selected = movable.getTile() === event.newSelection;
+          }
+        });
 
-	function toggleGridDirection()
-	{
-		alert("Not implemented");
-	}
+        board.updateEvent = new Event("updateEvent", [
+          function (event, info) {
+            win.render(ctx);
+          },
+        ]);
 
-</script>
+        board.updateEvent.fire({});
+      }
 
-</head>
-<body onload="setTimeout(run, 1000);">
-<h1 style="font: italic 2em Helvetica;">Canvas Demo (built for Gecko >= 3)</h1>
-<div>
-	<canvas id="DemoCanvas" style="border: 0px solid black;">Your browser does not support the canvas element.</canvas>
-	<div id="Coordinates">(0,0)</div>
-	<div>
-		Grid direction: <span id="LabelGridDirection">horizontal</span>
-	</div>
-	<button id="ButtonToggleGridDirection" onclick="toggleGridDirection()">Toggle grid direction</button>
-</div>
-</body>
+      function selectTile(board) {
+        return function (event, info) {
+          if (info.currentTile) board.setSelection(info.currentTile);
+        };
+      }
 
+      function showCursorCoordinates(targetId) {
+        var target = document.getElementById(targetId);
+        return function (event, info) {
+          var p = info["coords"];
+          if (p) {
+            target.innerHTML = "(" + p.x + "," + p.y + ")";
+          }
+        };
+      }
+
+      function signalCursorChangeIfApplicable(board) {
+        return function (event, info) {
+          if (info.currentTile) board.cursor = info.currentTile;
+        };
+      }
+
+      function toggleGridDirection() {
+        alert("Not implemented");
+      }
+    </script>
+  </head>
+  <body onload="setTimeout(run, 1000);">
+    <h1 style="font: italic 2em Helvetica">
+      Canvas Demo (built for Gecko >= 3)
+    </h1>
+    <div>
+      <canvas id="DemoCanvas" style="border: 0px solid black"
+        >Your browser does not support the canvas element.</canvas
+      >
+      <div id="Coordinates">(0,0)</div>
+      <div>Grid direction: <span id="LabelGridDirection">horizontal</span></div>
+      <button id="ButtonToggleGridDirection" onclick="toggleGridDirection()">
+        Toggle grid direction
+      </button>
+    </div>
+  </body>
+</html>
